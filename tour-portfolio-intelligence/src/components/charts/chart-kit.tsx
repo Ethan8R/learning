@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 /** Shared chart chrome so every chart reads as one system. */
 export const AXIS = {
   stroke: "var(--chart-baseline)",
-  tick: { fill: "var(--chart-axis)", fontSize: 11 },
+  tick: { fill: "var(--chart-axis)", fontSize: 11, fontFamily: "var(--font-ledger)" },
   tickLine: false,
 } as const;
 
@@ -15,12 +15,12 @@ export const pctTick = (v: number) => `${Math.round(v * 100)}%`;
 
 export function TooltipCard({ title, rows }: { title: ReactNode; rows: { label: ReactNode; value: ReactNode; swatch?: string; dashed?: boolean }[] }) {
   return (
-    <div className="min-w-44 rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
-      <div className="mb-1.5 font-medium text-foreground">{title}</div>
+    <div className="min-w-48 rounded-md border border-ink/10 bg-ink px-3 py-2.5 text-xs text-[#f6f1e4] shadow-xl">
+      <div className="mb-2 font-mono text-[0.6875rem] tracking-[0.06em] text-[#e3b261] uppercase">{title}</div>
       <div className="space-y-1">
         {rows.map((r, i) => (
           <div key={i} className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-[#f6f1e4]/70">
               {r.swatch && (
                 <span
                   className="inline-block h-0.5 w-3"
@@ -33,7 +33,7 @@ export function TooltipCard({ title, rows }: { title: ReactNode; rows: { label: 
               )}
               {r.label}
             </span>
-            <span className="font-medium text-foreground tabular">{r.value}</span>
+            <span className="font-mono font-medium text-[#f6f1e4] tabular">{r.value}</span>
           </div>
         ))}
       </div>

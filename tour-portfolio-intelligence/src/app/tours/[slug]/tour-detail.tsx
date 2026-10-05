@@ -32,20 +32,23 @@ export function TourDetail({ slug }: { slug: string }) {
   const outsideFilters = !tourMatches(tour, filters);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/tours" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <div className="space-y-8">
+      <div className="rise">
+        <Link
+          href="/tours"
+          className="inline-flex min-h-9 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
+        >
           <ArrowLeft className="size-4" aria-hidden />
           Tour comparison
         </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{tour.name}</h1>
-          <StatusBadge status={summary.status} />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="eyebrow mt-5">
           {tour.region} · {tour.type} · {tour.durationDays} days · avg. ${fmtInt(tour.pricePerPax)} per guest
           {tour.firstYear > 2023 && ` · launched ${tour.firstYear}`}
         </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="text-[2.25rem] leading-[1.05] text-ink md:text-[3.25rem]">{tour.name}</h1>
+          <StatusBadge status={summary.status} className="text-xs" />
+        </div>
         {outsideFilters && (
           <p className="mt-2 text-xs text-muted-foreground">
             This tour sits outside the current region or type filter; showing it anyway.
@@ -61,7 +64,11 @@ export function TourDetail({ slug }: { slug: string }) {
         </Card>
       ) : (
         <>
-          <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Tour metrics">
+          <section
+            className="rise grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-rule bg-rule shadow-[0_10px_28px_-18px_rgba(16,33,46,0.25)] lg:grid-cols-4"
+            aria-label="Tour metrics"
+            style={{ ["--i" as string]: 1 }}
+          >
             <Stat label="Average load factor" value={fmtPct(summary.total.lf, 1)} sub={<>break-even {fmtPct(summary.total.beLf)} · <TrendArrow trend={summary.trend} slope={summary.slope} /></>} />
             <Stat
               label="Departures run / cancelled"
@@ -83,31 +90,36 @@ export function TourDetail({ slug }: { slug: string }) {
             />
           </section>
 
-          <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <section className="rise grid grid-cols-1 gap-5 lg:grid-cols-5" style={{ ["--i" as string]: 2 }}>
             {insight && (
-              <Card className="border-violet-200 bg-gradient-to-b from-violet-50/70 to-card lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="size-4 text-violet-600" aria-hidden />
-                    AI insight
-                  </CardTitle>
-                  <CardDescription>Demo: generated from the sample data with fixed rules</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm leading-relaxed">
-                  <p className="font-medium">{insight.headline}</p>
-                  {insight.points.length > 0 && (
-                    <ul className="list-disc space-y-1.5 pl-5 text-muted-foreground">
-                      {insight.points.map((p) => (
-                        <li key={p}>{p}</li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="rounded-lg border border-violet-200 bg-card p-3">
-                    <div className="text-xs font-semibold tracking-wide text-violet-700 uppercase">Recommendation</div>
-                    <p className="mt-1">{insight.recommendation}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <article className="relative overflow-hidden rounded-lg bg-ink p-6 text-[#f6f1e4] shadow-[0_18px_40px_-24px_rgba(16,33,46,0.6)] lg:col-span-2">
+                <svg className="pointer-events-none absolute -top-10 -right-10 size-48 text-[#e3b261]/15" viewBox="0 0 100 100" aria-hidden>
+                  <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" />
+                  <circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" />
+                  <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" />
+                </svg>
+                <div className="flex items-center gap-2 font-mono text-[0.6875rem] tracking-[0.12em] text-[#e3b261] uppercase">
+                  <Sparkles className="size-4" aria-hidden />
+                  AI insight
+                  <span className="rounded-full border border-[#e3b261]/50 px-1.5 py-px text-[0.625rem] tracking-[0.08em]">Demo</span>
+                </div>
+                <p className="font-display mt-4 text-[1.625rem] leading-[1.15]">{insight.headline}</p>
+                {insight.points.length > 0 && (
+                  <ul className="mt-4 space-y-2 text-sm leading-relaxed text-[#f6f1e4]/80">
+                    {insight.points.map((p) => (
+                      <li key={p} className="flex gap-2.5">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#e3b261]" aria-hidden />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-5 border-t border-white/15 pt-4">
+                  <div className="font-mono text-[0.6875rem] tracking-[0.12em] text-[#e3b261] uppercase">Recommendation</div>
+                  <p className="mt-1.5 text-[0.9375rem] leading-relaxed font-medium">{insight.recommendation}</p>
+                </div>
+                <p className="mt-4 text-[0.6875rem] text-[#f6f1e4]/50">Generated from the sample data with fixed rules.</p>
+              </article>
             )}
             <Card className="lg:col-span-3">
               <CardHeader>
@@ -127,7 +139,7 @@ export function TourDetail({ slug }: { slug: string }) {
             </Card>
           </section>
 
-          <Card>
+          <Card className="rise" style={{ ["--i" as string]: 3 }}>
             <CardHeader>
               <CardTitle>Departures in {activeYear}</CardTitle>
               <CardDescription>Booked pax against break-even and capacity for each departure</CardDescription>
@@ -169,10 +181,10 @@ export function TourDetail({ slug }: { slug: string }) {
                           <TableCell>
                             <span
                               className={cn(
-                                "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                                d.status === "operated" && "bg-muted text-foreground",
-                                d.status === "cancelled" && "bg-red-50 text-red-900",
-                                d.status === "upcoming" && "bg-sky-50 text-sky-900",
+                                "rounded-full border px-2 py-0.5 font-mono text-[0.6875rem] font-medium uppercase",
+                                d.status === "operated" && "border-rule bg-muted text-ink",
+                                d.status === "cancelled" && "border-[#d99a8c] bg-[var(--cell-below)] text-[#8a2414]",
+                                d.status === "upcoming" && "border-[#9cc3dc] bg-[#dcebf4] text-[#0b4a6e]",
                               )}
                             >
                               {d.status}
@@ -220,12 +232,12 @@ export function TourDetail({ slug }: { slug: string }) {
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: React.ReactNode; tone?: "bad" }) {
   return (
-    <Card className="gap-1 px-4 py-4">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className={cn("text-2xl font-semibold tracking-tight tabular", tone === "bad" && "text-[var(--text-critical)]")}>
+    <div className="flex flex-col gap-2 bg-card p-5">
+      <div className="eyebrow">{label}</div>
+      <div className={cn("font-display text-[2.5rem] leading-none tabular", tone === "bad" ? "text-[var(--text-critical)]" : "text-ink")}>
         {value}
       </div>
       {sub && <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">{sub}</div>}
-    </Card>
+    </div>
   );
 }

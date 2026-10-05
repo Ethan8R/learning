@@ -26,6 +26,8 @@ Lint and typecheck: `npm run lint` and `npx tsc --noEmit`.
 
 Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui (Base UI primitives) · Recharts 3 · lucide icons.
 
+The visual design ("ship's manifest": paper, ink and brass, with Instrument Serif, Schibsted Grotesk and IBM Plex Mono) is documented in [`design-system/MASTER.md`](design-system/MASTER.md).
+
 ## Screens
 
 | Route | Screen | What it shows |

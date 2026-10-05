@@ -36,7 +36,7 @@ export function TourYearChart({ rows }: { rows: { year: string; lf: number; beLf
                     title={label}
                     rows={[
                       { label: "Load factor", value: fmtPct(payload[0].payload.lf, 1), swatch: BAND_FILL[bandOf(payload[0].payload.lf, payload[0].payload.beLf)] },
-                      { label: "Break-even LF", value: fmtPct(payload[0].payload.beLf, 1), swatch: "var(--foreground)", dashed: true },
+                      { label: "Break-even LF", value: fmtPct(payload[0].payload.beLf, 1), swatch: "#f6f1e4", dashed: true },
                       { label: "Departures", value: payload[0].payload.departures },
                     ]}
                   />
@@ -94,7 +94,7 @@ export function DepartureChart({ departures }: { departures: Departure[] }) {
                     title={`${fmtDate(d.date)} · ${d.status}${d.cancellationReason ? ` (${d.cancellationReason.toLowerCase()})` : ""}`}
                     rows={[
                       { label: "Booked pax", value: d.bookedPax, swatch: DEP_FILL[depKind(d)] },
-                      { label: "Break-even pax", value: d.breakEvenPax, swatch: "var(--foreground)", dashed: true },
+                      { label: "Break-even pax", value: d.breakEvenPax, swatch: "#f6f1e4", dashed: true },
                       { label: "Capacity", value: d.capacity, swatch: "var(--chart-axis)", dashed: false },
                       { label: "Load factor", value: fmtPct(d.bookedPax / d.capacity) },
                       { label: d.status === "upcoming" ? "Projected margin" : "Margin", value: fmtMoney(departureMargin(d), { signed: true }) },

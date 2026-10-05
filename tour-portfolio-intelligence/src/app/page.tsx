@@ -24,6 +24,12 @@ import {
 import { fmtChange, fmtInt, fmtMoney, fmtPct, fmtPts } from "@/lib/format";
 
 const STATUS_ORDER: TourStatus[] = ["Keep", "Watch", "Rework", "Retire candidate"];
+const STATUS_FILL: Record<TourStatus, string> = {
+  Keep: "var(--status-good)",
+  Watch: "var(--status-warning)",
+  Rework: "#d27a3a",
+  "Retire candidate": "var(--status-critical)",
+};
 
 export default function OverviewPage() {
   const { filters } = useFilters();
@@ -57,19 +63,62 @@ export default function OverviewPage() {
   const dir = (a: number, b: number) => (a > b ? "up" : a < b ? "down" : "flat") as "up" | "down" | "flat";
   const caption = prevAgg ? `${latest} vs ${prev}` : `${latest}`;
 
+  const retire = statusCounts.find((x) => x.s === "Retire candidate")!;
+  const lfDelta = prevAgg ? latestAgg.lf - prevAgg.lf : 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+    <div className="space-y-8">
+      <header className="rise grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Portfolio overview</h1>
-          <p className="text-sm text-muted-foreground">
-            {summaries.length} tours · {fmtInt(scope.departures)} departures · {years[0]}
+          <p className="eyebrow">
+            Portfolio overview · {summaries.length} tours · {fmtInt(scope.departures)} departures · {years[0]}
             {years.length > 1 ? `–${latest}` : ""}
           </p>
+          <h1 className="mt-3 max-w-[26ch] text-[2.25rem] leading-[1.05] text-ink md:text-[3.25rem]">
+            In {latest}, the portfolio filled <span className="text-river">{fmtPct(latestAgg.lf)}</span> of seats
+            {prevAgg && Math.abs(lfDelta) >= 0.001 ? (
+              <>
+                , <em className={lfDelta < 0 ? "text-[var(--text-critical)]" : "text-[var(--text-good)]"}>
+                  {(Math.abs(lfDelta) * 100).toFixed(1)} pts {lfDelta < 0 ? "down" : "up"}
+                </em>{" "}
+                on {prev}.
+              </>
+            ) : (
+              "."
+            )}
+          </h1>
         </div>
-      </div>
+        {retire.n > 0 && (
+          <Link
+            href={`/tours?status=${encodeURIComponent("Retire candidate")}`}
+            className="group flex max-w-sm items-start gap-3 rounded-lg border border-[#d99a8c] bg-[var(--cell-below)]/60 p-4 transition-colors duration-200 hover:bg-[var(--cell-below)]"
+          >
+            <TriangleAlert className="mt-0.5 size-5 shrink-0 text-[var(--text-critical)]" aria-hidden />
+            <span className="text-sm leading-snug text-ink">
+              <strong className="font-semibold">
+                {retire.n} tour{retire.n > 1 ? "s" : ""}
+              </strong>{" "}
+              {retire.n > 1 ? "have" : "has"} missed break-even three years or more
+              {retire.margin < 0 ? (
+                <>
+                  , losing <strong className="font-semibold">{fmtMoney(-retire.margin)}</strong>.
+                </>
+              ) : (
+                "."
+              )}
+              <span className="mt-1 flex items-center gap-1 font-medium text-[var(--text-critical)] group-hover:underline">
+                Review retire candidates <ChevronRight className="size-4" aria-hidden />
+              </span>
+            </span>
+          </Link>
+        )}
+      </header>
 
-      <section aria-label="Key metrics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section
+        aria-label="Key metrics"
+        className="rise grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-rule bg-rule shadow-[0_10px_28px_-18px_rgba(16,33,46,0.25)] sm:grid-cols-2 xl:grid-cols-4"
+        style={{ ["--i" as string]: 1 }}
+      >
         <KpiCard
           label={`Average load factor, ${latest}`}
           value={fmtPct(latestAgg.lf, 1)}
@@ -108,7 +157,7 @@ export default function OverviewPage() {
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="rise grid grid-cols-1 gap-5 lg:grid-cols-3" style={{ ["--i" as string]: 2 }}>
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Average load factor</CardTitle>
@@ -150,31 +199,34 @@ export default function OverviewPage() {
             <CardTitle>Portfolio health</CardTitle>
             <CardDescription>Auto-assigned status across {summaries.length} tours, with cumulative margin</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {statusCounts.map(({ s, n, margin }) => (
-              <Link
-                key={s}
-                href={`/tours?status=${encodeURIComponent(s)}`}
-                className="group flex items-center gap-3 rounded-md p-1 -m-1 hover:bg-muted/60"
-              >
-                <StatusBadge status={s} className="w-36 justify-start" />
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-foreground/70"
-                    style={{ width: `${summaries.length ? (n / summaries.length) * 100 : 0}%` }}
-                  />
-                </div>
-                <span className="w-6 text-right text-sm font-semibold tabular">{n}</span>
-                <span
-                  className={`w-16 text-right text-xs tabular ${margin < 0 ? "text-[var(--text-critical)]" : "text-muted-foreground"}`}
-                  title="Cumulative margin across the selected years"
-                >
-                  {fmtMoney(margin, { signed: true })}
-                </span>
-              </Link>
-            ))}
-            <div className="rounded-lg border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
-              <span className="font-medium text-foreground">How status is set: </span>
+          <CardContent className="space-y-4">
+            <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" aria-hidden>
+              {statusCounts.map(({ s, n }) =>
+                n ? <div key={s} style={{ flexGrow: n, background: STATUS_FILL[s] }} title={`${s}: ${n}`} /> : null,
+              )}
+            </div>
+            <ul className="divide-y divide-rule">
+              {statusCounts.map(({ s, n, margin }) => (
+                <li key={s}>
+                  <Link
+                    href={`/tours?status=${encodeURIComponent(s)}`}
+                    className="group -mx-2 flex min-h-12 items-center gap-3 rounded-md px-2 transition-colors duration-200 hover:bg-muted/70"
+                  >
+                    <span className="font-display w-8 text-[1.75rem] leading-none text-ink tabular">{n}</span>
+                    <StatusBadge status={s} />
+                    <span
+                      className={`ml-auto font-mono text-xs tabular ${margin < 0 ? "text-[var(--text-critical)]" : "text-muted-foreground"}`}
+                      title="Cumulative margin across the selected years"
+                    >
+                      {fmtMoney(margin, { signed: true })}
+                    </span>
+                    <ChevronRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-dashed border-rule pt-3 text-xs leading-relaxed text-muted-foreground">
+              <span className="eyebrow mr-1">How status is set</span>
               Retire candidate = below break-even 3+ years. Rework = below 2 years. Watch = below or within 5 pts in
               the latest year, or declining with thin headroom. Keep = everything else.
             </div>
@@ -182,11 +234,11 @@ export default function OverviewPage() {
         </Card>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section className="rise grid grid-cols-1 gap-5 lg:grid-cols-2" style={{ ["--i" as string]: 3 }}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TriangleAlert className="size-4 text-[var(--status-critical)]" aria-hidden />
+              <TriangleAlert className="size-5 text-[var(--status-critical)]" aria-hidden />
               Needs attention
             </CardTitle>
             <CardDescription>Below break-even 2+ consecutive years, sorted by cumulative loss</CardDescription>
@@ -198,7 +250,7 @@ export default function OverviewPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="size-4 text-[var(--status-good)]" aria-hidden />
+              <ShieldCheck className="size-5 text-[var(--status-good)]" aria-hidden />
               Reliable performers
             </CardTitle>
             <CardDescription>Above break-even every year in range, highest load factor first</CardDescription>
@@ -223,10 +275,14 @@ function TourList({
 }) {
   if (!items.length) return <p className="py-6 text-center text-sm text-muted-foreground">{empty}</p>;
   return (
-    <ul className="-mx-2 divide-y">
-      {items.slice(0, 8).map((s) => (
+    <ul className="-mx-2 divide-y divide-rule">
+      {items.slice(0, 8).map((s, i) => (
         <li key={s.tour.id}>
-          <Link href={`/tours/${s.tour.slug}`} className="group flex items-center gap-3 rounded-md px-2 py-2.5 hover:bg-muted/60">
+          <Link
+            href={`/tours/${s.tour.slug}`}
+            className="group flex min-h-14 items-center gap-3 rounded-md px-2 py-2.5 transition-colors duration-200 hover:bg-muted/70"
+          >
+            <span className="font-display w-6 text-xl leading-none text-muted-foreground/70 tabular">{i + 1}</span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{s.tour.name}</div>
               <div className="truncate text-xs text-muted-foreground">
@@ -242,13 +298,13 @@ function TourList({
             </div>
             <div className="w-20 text-right">
               <div
-                className={`text-sm font-semibold tabular ${s.total.margin < 0 ? "text-[var(--text-critical)]" : ""}`}
+                className={`font-mono text-sm font-medium tabular ${s.total.margin < 0 ? "text-[var(--text-critical)]" : "text-ink"}`}
               >
                 {fmtMoney(s.total.margin, { signed: true })}
               </div>
-              <div className="text-[11px] text-muted-foreground">cum. margin</div>
+              <div className="eyebrow text-[0.625rem]">cum. margin</div>
             </div>
-            <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground" aria-hidden />
+            <ChevronRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-ink" aria-hidden />
           </Link>
         </li>
       ))}

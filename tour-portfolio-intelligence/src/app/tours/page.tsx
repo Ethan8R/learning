@@ -49,8 +49,8 @@ function SortHead({
         type="button"
         onClick={() => onSort(k)}
         className={cn(
-          "inline-flex items-center gap-1 text-xs font-medium hover:text-foreground",
-          active ? "text-foreground" : "text-muted-foreground",
+          "inline-flex min-h-8 items-center gap-1 font-mono text-[0.6875rem] font-medium tracking-[0.06em] uppercase hover:text-ink",
+          active ? "text-ink" : "text-muted-foreground",
         )}
       >
         {children}
@@ -118,25 +118,27 @@ function ToursTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <header className="rise flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Tour comparison</h1>
-          <p className="text-sm text-muted-foreground">
-            Every tour side by side. Load factor per year, coloured against that tour&apos;s break-even. Click a row
-            for detail.
+          <p className="eyebrow">Tour comparison · {summaries.length} tours · {years[0]}
+            {years.length > 1 ? `–${years.at(-1)}` : ""}</p>
+          <h1 className="mt-3 text-[2.25rem] leading-[1.05] text-ink md:text-[3rem]">Every tour, side by side.</h1>
+          <p className="mt-2 max-w-[60ch] text-sm text-muted-foreground">
+            Load factor per year, coloured against each tour&apos;s own break-even. Select a row for the departure-level
+            detail.
           </p>
         </div>
         <BandLegend />
-      </div>
+      </header>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="rise flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 1 }}>
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search tours, regions, types"
-            className="pl-8"
+            className="h-10 bg-card pl-8"
             aria-label="Search tours"
           />
         </div>
@@ -148,21 +150,23 @@ function ToursTable() {
               onClick={() => setStatus(s)}
               aria-pressed={status === s}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                status === s ? "border-foreground bg-foreground text-background" : "bg-card text-muted-foreground hover:text-foreground",
+                "min-h-9 rounded-full border px-3.5 text-xs font-medium transition-colors duration-200",
+                status === s
+                  ? "border-ink bg-ink text-primary-foreground"
+                  : "border-rule bg-card text-muted-foreground hover:border-ink/40 hover:text-ink",
               )}
             >
               {s}
-              <span className="ml-1 opacity-70 tabular">{s === "All" ? summaries.length : counts[s]}</span>
+              <span className="ml-1.5 font-mono opacity-70 tabular">{s === "All" ? summaries.length : counts[s]}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <Card className="py-0">
+      <Card className="rise py-0" style={{ ["--i" as string]: 2 }}>
         <CardContent className="px-0">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#f4efe2]">
               <TableRow>
                 <SortHead sort={sort} onSort={toggleSort} k="name" className="min-w-56 pl-4">Tour</SortHead>
                 {years.map((y) => (
@@ -180,13 +184,13 @@ function ToursTable() {
               {rows.map((s) => (
                 <TableRow
                   key={s.tour.id}
-                  className="cursor-pointer"
+                  className="cursor-pointer border-rule transition-colors duration-150 hover:bg-[#f4efe2]"
                   onClick={() => router.push(`/tours/${s.tour.slug}`)}
                 >
                   <TableCell className="pl-4">
                     <Link
                       href={`/tours/${s.tour.slug}`}
-                      className="font-medium hover:underline"
+                      className="font-medium text-ink underline-offset-4 hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {s.tour.name}
@@ -203,7 +207,7 @@ function ToursTable() {
                   <TableCell>
                     <TrendArrow trend={s.trend} slope={s.slope} />
                   </TableCell>
-                  <TableCell className="text-right tabular">
+                  <TableCell className="text-right font-mono tabular">
                     {s.total.operated}
                     <span className="text-muted-foreground"> / </span>
                     <span className={s.total.cancelled ? "font-medium text-[var(--text-critical)]" : "text-muted-foreground"}>
@@ -214,7 +218,7 @@ function ToursTable() {
                     )}
                   </TableCell>
                   <TableCell
-                    className={cn("text-right font-medium tabular", s.total.margin < 0 && "text-[var(--text-critical)]")}
+                    className={cn("text-right font-mono font-medium tabular", s.total.margin < 0 && "text-[var(--text-critical)]")}
                   >
                     {fmtMoney(s.total.margin, { signed: true })}
                   </TableCell>

@@ -1,8 +1,8 @@
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Sparkline } from "@/components/charts/sparkline";
 import { cn } from "@/lib/utils";
 
+/** One column of the KPI ledger. Rendered inside a shared panel with vertical rules. */
 export function KpiCard({
   label,
   value,
@@ -25,28 +25,29 @@ export function KpiCard({
   const bad = deltaDirection && deltaDirection !== "flat" && deltaDirection !== goodWhen;
   const Icon = deltaDirection === "up" ? ArrowUpRight : deltaDirection === "down" ? ArrowDownRight : Minus;
   return (
-    <Card className="gap-2 px-4 py-4">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="flex items-end justify-between gap-2">
-        <div className="text-2xl font-semibold tracking-tight md:text-3xl">{value}</div>
-        {spark && spark.length > 1 && <Sparkline values={spark} />}
+    <div className="flex flex-col gap-3 bg-card p-5">
+      <div className="eyebrow">{label}</div>
+      <div className="flex items-end justify-between gap-3">
+        <div className="font-display text-[2.75rem] leading-none text-ink">{value}</div>
+        {spark && spark.length > 1 && <Sparkline values={spark} color={bad ? "var(--status-critical)" : "var(--river)"} />}
       </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
         {delta && (
           <span
             className={cn(
-              "inline-flex items-center gap-0.5 font-medium tabular",
-              good && "text-[var(--text-good)]",
-              bad && "text-[var(--text-critical)]",
-              !good && !bad && "text-muted-foreground",
+              "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-mono font-medium tabular",
+              good && "bg-[var(--cell-above)] text-[var(--text-good)]",
+              bad && "bg-[var(--cell-below)] text-[var(--text-critical)]",
+              !good && !bad && "bg-muted text-muted-foreground",
             )}
           >
             <Icon className="size-3.5" aria-hidden />
             {delta}
+            <span className="sr-only">{good ? "(improvement)" : bad ? "(deterioration)" : ""}</span>
           </span>
         )}
         <span className="text-muted-foreground">{caption}</span>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -5,10 +5,10 @@ import { fmtPct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLE: Record<TourStatus, { cls: string; icon: typeof Eye }> = {
-  Keep: { cls: "border-emerald-200 bg-emerald-50 text-emerald-900", icon: CircleCheck },
-  Watch: { cls: "border-amber-200 bg-amber-50 text-amber-900", icon: Eye },
-  Rework: { cls: "border-orange-200 bg-orange-50 text-orange-900", icon: Wrench },
-  "Retire candidate": { cls: "border-red-200 bg-red-50 text-red-900", icon: CircleAlert },
+  Keep: { cls: "border-[#9cc7a6] bg-[var(--cell-above)] text-[#1d5631]", icon: CircleCheck },
+  Watch: { cls: "border-[#e3c47a] bg-[var(--cell-near)] text-[#6b4a07]", icon: Eye },
+  Rework: { cls: "border-[#e2ad86] bg-[#f6dcc6] text-[#7a3a12]", icon: Wrench },
+  "Retire candidate": { cls: "border-[#d99a8c] bg-[var(--cell-below)] text-[#8a2414]", icon: CircleAlert },
 };
 
 export function StatusBadge({ status, className }: { status: TourStatus; className?: string }) {
@@ -16,7 +16,7 @@ export function StatusBadge({ status, className }: { status: TourStatus; classNa
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 font-mono text-[0.6875rem] font-medium tracking-[0.02em] uppercase",
         cls,
         className,
       )}
@@ -55,8 +55,11 @@ const BAND_STYLE: Record<Band, { bg: string; label: string; icon: typeof Eye }> 
 export function LfCell({ lf, beLf, compact }: { lf?: number; beLf?: number; compact?: boolean }) {
   if (lf === undefined || beLf === undefined) {
     return (
-      <div className="grid h-10 place-items-center rounded-md bg-muted/50 text-xs text-muted-foreground" title="Not on sale">
-        n/a
+      <div
+        className="grid h-10 place-items-center rounded-[5px] border border-dashed border-rule font-mono text-[0.6875rem] text-muted-foreground"
+        title="Not on sale this year"
+      >
+        not sold
       </div>
     );
   }
@@ -64,12 +67,12 @@ export function LfCell({ lf, beLf, compact }: { lf?: number; beLf?: number; comp
   const { bg, label } = BAND_STYLE[band];
   return (
     <div
-      className={cn("flex h-10 flex-col items-center justify-center rounded-md text-foreground", compact && "h-9")}
+      className={cn("flex h-10 flex-col items-center justify-center rounded-[5px] text-ink", compact && "h-9")}
       style={{ background: bg }}
       title={`${label}. Load factor ${fmtPct(lf)}, break-even ${fmtPct(beLf)}`}
     >
-      <span className="text-sm font-semibold tabular">{fmtPct(lf)}</span>
-      {!compact && <span className="text-[10px] leading-none text-foreground/60 tabular">BE {fmtPct(beLf)}</span>}
+      <span className="font-mono text-[0.8125rem] font-medium tabular">{fmtPct(lf)}</span>
+      {!compact && <span className="font-mono text-[10px] leading-none text-ink/60 tabular">BE {fmtPct(beLf)}</span>}
     </div>
   );
 }

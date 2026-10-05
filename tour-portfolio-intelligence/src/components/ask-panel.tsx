@@ -80,23 +80,26 @@ export function AskPanel() {
 
   return (
     <Sheet open={askOpen} onOpenChange={setAskOpen}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-[520px] data-[side=right]:sm:max-w-[520px]">
-        <SheetHeader className="border-b">
-          <SheetTitle className="flex items-center gap-2">
-            <Sparkles className="size-4 text-violet-600" aria-hidden />
+      <SheetContent
+        side="right"
+        className="w-full gap-0 border-l-0 bg-paper p-0 sm:max-w-[520px] data-[side=right]:sm:max-w-[520px] [&>[data-slot=sheet-close]]:top-4 [&>[data-slot=sheet-close]]:text-[#f6f1e4] [&>[data-slot=sheet-close]]:hover:bg-white/10 [&>[data-slot=sheet-close]]:hover:text-white"
+      >
+        <SheetHeader className="border-b border-white/10 bg-ink pr-12 text-[#f6f1e4]">
+          <SheetTitle className="font-display flex items-center gap-2 text-[1.75rem] leading-none font-normal text-[#f6f1e4]">
+            <Sparkles className="size-4 text-[#e3b261]" aria-hidden />
             Ask the data
-            <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-800">
+            <span className="rounded-full border border-[#e3b261]/60 px-2 py-0.5 font-mono text-[0.625rem] font-medium tracking-[0.08em] text-[#f0c77f] uppercase">
               Demo
             </span>
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className="text-[#f6f1e4]/70">
             Canned answers computed from the sample dataset (all regions, 2023–2026). No live AI model is connected.
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {messages.length === 0 && (
-            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-rule p-4 text-sm text-muted-foreground">
               Ask about load factor, cancellations or which tours to keep. Pick a suggested question to see how an
               analytics agent would answer.
             </div>
@@ -104,16 +107,16 @@ export function AskPanel() {
           {messages.map((m) =>
             m.role === "user" ? (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3.5 py-2 text-sm text-primary-foreground">
+                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-ink px-3.5 py-2 text-sm text-primary-foreground">
                   {m.text}
                 </div>
               </div>
             ) : (
               <div key={m.id} className="flex gap-2.5">
-                <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700">
+                <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-[#f3e2c0] text-[#7a4f12]">
                   <Bot className="size-4" aria-hidden />
                 </span>
-                <div className="min-w-0 flex-1 space-y-3 rounded-2xl rounded-tl-sm border bg-card px-3.5 py-3 text-sm leading-relaxed">
+                <div className="min-w-0 flex-1 space-y-3 rounded-2xl rounded-tl-sm border border-rule bg-card px-3.5 py-3 text-sm leading-relaxed">
                   <div>{m.text}</div>
                   {m.visual}
                 </div>
@@ -122,7 +125,7 @@ export function AskPanel() {
           )}
           {thinking && (
             <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
-              <span className="grid size-7 place-items-center rounded-full bg-violet-100 text-violet-700">
+              <span className="grid size-7 place-items-center rounded-full bg-[#f3e2c0] text-[#7a4f12]">
                 <Bot className="size-4" aria-hidden />
               </span>
               <span className="animate-pulse">Analysing departures…</span>
@@ -131,7 +134,7 @@ export function AskPanel() {
           <div ref={endRef} />
         </div>
 
-        <div className="space-y-3 border-t bg-muted/30 px-4 py-3">
+        <div className="space-y-3 border-t border-rule bg-paper px-4 py-3">
           {remaining.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {remaining.map((s) => (
@@ -140,7 +143,7 @@ export function AskPanel() {
                   type="button"
                   disabled={thinking}
                   onClick={() => ask(s.q)}
-                  className="rounded-full border bg-card px-3 py-1 text-left text-xs font-medium text-foreground hover:border-violet-300 hover:bg-violet-50 disabled:opacity-50"
+                  className="min-h-8 rounded-full border border-rule bg-card px-3 py-1 text-left text-xs font-medium text-ink transition-colors duration-200 hover:border-brass hover:bg-[#f7ecd6] disabled:opacity-50"
                 >
                   {s.q}
                 </button>
@@ -275,7 +278,7 @@ function regionAnswer(): Answer {
             <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid {...GRID} horizontal={false} vertical />
               <XAxis type="number" {...AXIS} tickFormatter={(v) => `${v.toFixed(0)}`} />
-              <YAxis type="category" dataKey="region" {...AXIS} axisLine={false} width={150} interval={0} />
+              <YAxis type="category" dataKey="region" {...AXIS} axisLine={false} width={182} interval={0} />
               <Tooltip
                 cursor={{ fill: "var(--muted)", opacity: 0.6 }}
                 content={({ active, payload }) =>
