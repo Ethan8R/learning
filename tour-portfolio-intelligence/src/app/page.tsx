@@ -1,9 +1,32 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ChevronRight, ShieldCheck, TriangleAlert } from "lucide-react";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Body1,
+  Button,
+  Caption1,
+  Card,
+  CardHeader,
+  Divider,
+  MessageBar,
+  MessageBarActions,
+  MessageBarBody,
+  MessageBarTitle,
+  Subtitle1,
+  Text,
+  Title2,
+} from "@fluentui/react-components";
+import {
+  CalendarCancelRegular,
+  CheckmarkCircleRegular,
+  ChevronRightRegular,
+  DataTrendingRegular,
+  MoneyRegular,
+  ShieldCheckmarkRegular,
+  WarningRegular,
+} from "@fluentui/react-icons";
 import { useFilters } from "@/components/filters-provider";
 import { KpiCard } from "@/components/kpi-card";
 import { LfTrendChart } from "@/components/charts/lf-trend-chart";
@@ -27,11 +50,14 @@ const STATUS_ORDER: TourStatus[] = ["Keep", "Watch", "Rework", "Retire candidate
 const STATUS_FILL: Record<TourStatus, string> = {
   Keep: "var(--status-good)",
   Watch: "var(--status-warning)",
-  Rework: "#d27a3a",
+  Rework: "var(--colorPaletteDarkOrangeBackground3)",
   "Retire candidate": "var(--status-critical)",
 };
 
+const negative = "text-[var(--colorStatusDangerForeground1)]";
+
 export default function OverviewPage() {
+  const router = useRouter();
   const { filters } = useFilters();
   const [granularity, setGranularity] = useState<"year" | "quarter">("year");
   const [split, setSplit] = useState<"none" | "type">("none");
@@ -59,67 +85,47 @@ export default function OverviewPage() {
     const group = summaries.filter((x) => x.status === s);
     return { s, n: group.length, margin: group.reduce((sum, x) => sum + x.total.margin, 0) };
   });
+  const retire = statusCounts.find((x) => x.s === "Retire candidate")!;
 
   const dir = (a: number, b: number) => (a > b ? "up" : a < b ? "down" : "flat") as "up" | "down" | "flat";
   const caption = prevAgg ? `${latest} vs ${prev}` : `${latest}`;
-
-  const retire = statusCounts.find((x) => x.s === "Retire candidate")!;
   const lfDelta = prevAgg ? latestAgg.lf - prevAgg.lf : 0;
 
   return (
-    <div className="space-y-8">
-      <header className="rise grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div>
-          <p className="eyebrow">
-            Portfolio overview · {summaries.length} tours · {fmtInt(scope.departures)} departures · {years[0]}
-            {years.length > 1 ? `–${latest}` : ""}
-          </p>
-          <h1 className="mt-3 max-w-[26ch] text-[2.25rem] leading-[1.05] text-ink md:text-[3.25rem]">
-            In {latest}, the portfolio filled <span className="text-river">{fmtPct(latestAgg.lf)}</span> of seats
-            {prevAgg && Math.abs(lfDelta) >= 0.001 ? (
-              <>
-                , <em className={lfDelta < 0 ? "text-[var(--text-critical)]" : "text-[var(--text-good)]"}>
-                  {(Math.abs(lfDelta) * 100).toFixed(1)} pts {lfDelta < 0 ? "down" : "up"}
-                </em>{" "}
-                on {prev}.
-              </>
-            ) : (
-              "."
-            )}
-          </h1>
-        </div>
-        {retire.n > 0 && (
-          <Link
-            href={`/tours?status=${encodeURIComponent("Retire candidate")}`}
-            className="group flex max-w-sm items-start gap-3 rounded-lg border border-[#d99a8c] bg-[var(--cell-below)]/60 p-4 transition-colors duration-200 hover:bg-[var(--cell-below)]"
-          >
-            <TriangleAlert className="mt-0.5 size-5 shrink-0 text-[var(--text-critical)]" aria-hidden />
-            <span className="text-sm leading-snug text-ink">
-              <strong className="font-semibold">
-                {retire.n} tour{retire.n > 1 ? "s" : ""}
-              </strong>{" "}
-              {retire.n > 1 ? "have" : "has"} missed break-even three years or more
-              {retire.margin < 0 ? (
-                <>
-                  , losing <strong className="font-semibold">{fmtMoney(-retire.margin)}</strong>.
-                </>
-              ) : (
-                "."
-              )}
-              <span className="mt-1 flex items-center gap-1 font-medium text-[var(--text-critical)] group-hover:underline">
-                Review retire candidates <ChevronRight className="size-4" aria-hidden />
-              </span>
-            </span>
-          </Link>
-        )}
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-1">
+        <Title2 as="h1">Portfolio overview</Title2>
+        <Body1 className="text-[var(--colorNeutralForeground2)]">
+          In {latest} the portfolio filled <strong>{fmtPct(latestAgg.lf)}</strong> of seats
+          {prevAgg && Math.abs(lfDelta) >= 0.001
+            ? `, ${(Math.abs(lfDelta) * 100).toFixed(1)} pts ${lfDelta < 0 ? "down" : "up"} on ${prev}`
+            : ""}
+          . {summaries.length} tours · {fmtInt(scope.departures)} departures · {years[0]}
+          {years.length > 1 ? `–${latest}` : ""}.
+        </Body1>
       </header>
 
-      <section
-        aria-label="Key metrics"
-        className="rise grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-rule bg-rule shadow-[0_10px_28px_-18px_rgba(16,33,46,0.25)] sm:grid-cols-2 xl:grid-cols-4"
-        style={{ ["--i" as string]: 1 }}
-      >
+      {retire.n > 0 && (
+        <MessageBar intent="error" layout="multiline">
+          <MessageBarBody>
+            <MessageBarTitle>
+              {retire.n} tour{retire.n > 1 ? "s have" : " has"} missed break-even three years or more
+            </MessageBarTitle>
+            {retire.margin < 0
+              ? `Cumulative loss of ${fmtMoney(-retire.margin)} across the selected years. These are the strongest candidates to drop from the 2028 programme.`
+              : "Review them before the next contracting round."}
+          </MessageBarBody>
+          <MessageBarActions>
+            <Button onClick={() => router.push(`/tours?status=${encodeURIComponent("Retire candidate")}`)}>
+              Review retire candidates
+            </Button>
+          </MessageBarActions>
+        </MessageBar>
+      )}
+
+      <section aria-label="Key metrics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
+          icon={<DataTrendingRegular />}
           label={`Average load factor, ${latest}`}
           value={fmtPct(latestAgg.lf, 1)}
           delta={prevAgg ? fmtPts(latestAgg.lf - prevAgg.lf) : undefined}
@@ -129,6 +135,7 @@ export default function OverviewPage() {
           spark={byYear.map((y) => y.lf)}
         />
         <KpiCard
+          icon={<CheckmarkCircleRegular />}
           label={`Departures above break-even, ${latest}`}
           value={fmtPct(latestAgg.pctAbove)}
           delta={prevAgg ? fmtPts(latestAgg.pctAbove - prevAgg.pctAbove, 0) : undefined}
@@ -138,6 +145,7 @@ export default function OverviewPage() {
           spark={byYear.map((y) => y.pctAbove)}
         />
         <KpiCard
+          icon={<CalendarCancelRegular />}
           label={`Departures cancelled, ${latest}`}
           value={fmtInt(latestAgg.cancelled)}
           delta={prevAgg ? fmtChange(latestAgg.cancelled, prevAgg.cancelled) : undefined}
@@ -147,6 +155,7 @@ export default function OverviewPage() {
           spark={byYear.map((y) => y.cancelled)}
         />
         <KpiCard
+          icon={<MoneyRegular />}
           label={`Cancellation & rebooking cost, ${latest}`}
           value={fmtMoney(latestAgg.cancellationCost)}
           delta={prevAgg ? fmtChange(latestAgg.cancellationCost, prevAgg.cancellationCost) : undefined}
@@ -157,107 +166,109 @@ export default function OverviewPage() {
         />
       </section>
 
-      <section className="rise grid grid-cols-1 gap-5 lg:grid-cols-3" style={{ ["--i" as string]: 2 }}>
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Average load factor</CardTitle>
-            <CardDescription>
-              Booked pax ÷ capacity, all departures including cancelled ones at bookings held when cancelled.
-            </CardDescription>
-            <CardAction className="flex flex-wrap justify-end gap-2">
-              <Segmented
-                label="Granularity"
-                value={granularity}
-                onChange={setGranularity}
-                options={[
-                  { value: "year", label: "By year" },
-                  { value: "quarter", label: "By quarter" },
-                ]}
-              />
-              <Segmented
-                label="Split"
-                value={split}
-                onChange={setSplit}
-                options={[
-                  { value: "none", label: "Total" },
-                  { value: "type", label: "By type" },
-                ]}
-              />
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            {series.length ? (
-              <LfTrendChart data={series} split={split} breakEven={scope.beLf} />
-            ) : (
-              <p className="py-16 text-center text-sm text-muted-foreground">No departures match these filters.</p>
-            )}
-          </CardContent>
+          <CardHeader
+            header={<Subtitle1 as="h2">Average load factor</Subtitle1>}
+            description={
+              <Caption1 className="text-[var(--colorNeutralForeground3)]">
+                Booked pax ÷ capacity, including cancelled departures at the bookings they held.
+              </Caption1>
+            }
+          />
+          <div className="flex flex-wrap gap-2">
+            <Segmented
+              label="Granularity"
+              value={granularity}
+              onChange={setGranularity}
+              options={[
+                { value: "year", label: "By year" },
+                { value: "quarter", label: "By quarter" },
+              ]}
+            />
+            <Segmented
+              label="Split"
+              value={split}
+              onChange={setSplit}
+              options={[
+                { value: "none", label: "Total" },
+                { value: "type", label: "By tour type" },
+              ]}
+            />
+          </div>
+          {series.length ? (
+            <LfTrendChart data={series} split={split} breakEven={scope.beLf} />
+          ) : (
+            <Body1 className="py-16 text-center text-[var(--colorNeutralForeground3)]">No departures match these filters.</Body1>
+          )}
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Portfolio health</CardTitle>
-            <CardDescription>Auto-assigned status across {summaries.length} tours, with cumulative margin</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" aria-hidden>
-              {statusCounts.map(({ s, n }) =>
-                n ? <div key={s} style={{ flexGrow: n, background: STATUS_FILL[s] }} title={`${s}: ${n}`} /> : null,
-              )}
-            </div>
-            <ul className="divide-y divide-rule">
-              {statusCounts.map(({ s, n, margin }) => (
-                <li key={s}>
-                  <Link
-                    href={`/tours?status=${encodeURIComponent(s)}`}
-                    className="group -mx-2 flex min-h-12 items-center gap-3 rounded-md px-2 transition-colors duration-200 hover:bg-muted/70"
-                  >
-                    <span className="font-display w-8 text-[1.75rem] leading-none text-ink tabular">{n}</span>
-                    <StatusBadge status={s} />
-                    <span
-                      className={`ml-auto font-mono text-xs tabular ${margin < 0 ? "text-[var(--text-critical)]" : "text-muted-foreground"}`}
-                      title="Cumulative margin across the selected years"
-                    >
-                      {fmtMoney(margin, { signed: true })}
-                    </span>
-                    <ChevronRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <div className="border-t border-dashed border-rule pt-3 text-xs leading-relaxed text-muted-foreground">
-              <span className="eyebrow mr-1">How status is set</span>
-              Retire candidate = below break-even 3+ years. Rework = below 2 years. Watch = below or within 5 pts in
-              the latest year, or declining with thin headroom. Keep = everything else.
-            </div>
-          </CardContent>
+          <CardHeader
+            header={<Subtitle1 as="h2">Portfolio health</Subtitle1>}
+            description={
+              <Caption1 className="text-[var(--colorNeutralForeground3)]">
+                Auto-assigned status across {summaries.length} tours, with cumulative margin
+              </Caption1>
+            }
+          />
+          <div className="flex h-2 gap-0.5 overflow-hidden rounded-[var(--borderRadiusCircular)]" aria-hidden>
+            {statusCounts.map(({ s, n }) => (n ? <div key={s} style={{ flexGrow: n, background: STATUS_FILL[s] }} /> : null))}
+          </div>
+          <ul className="m-0 flex list-none flex-col p-0">
+            {statusCounts.map(({ s, n, margin }, i) => (
+              <li key={s}>
+                {i > 0 && <Divider />}
+                <Link
+                  href={`/tours?status=${encodeURIComponent(s)}`}
+                  className="-mx-2 flex min-h-11 items-center gap-3 rounded-[var(--borderRadiusMedium)] px-2 text-inherit no-underline hover:bg-[var(--colorSubtleBackgroundHover)]"
+                >
+                  <Text size={600} weight="semibold" className="w-9 tabular">
+                    {n}
+                  </Text>
+                  <StatusBadge status={s} />
+                  <Caption1 className={`ml-auto tabular ${margin < 0 ? negative : "text-[var(--colorNeutralForeground3)]"}`}>
+                    {fmtMoney(margin, { signed: true })}
+                  </Caption1>
+                  <ChevronRightRegular className="text-[var(--colorNeutralForeground3)]" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <MessageBar intent="info" layout="multiline" className="mt-auto">
+            <MessageBarBody>
+              <MessageBarTitle>How status is set</MessageBarTitle>
+              Retire candidate: below break-even 3+ years. Rework: below 2 years. Watch: below or within 5 pts in the
+              latest year, or declining with thin headroom. Keep: everything else.
+            </MessageBarBody>
+          </MessageBar>
         </Card>
       </section>
 
-      <section className="rise grid grid-cols-1 gap-5 lg:grid-cols-2" style={{ ["--i" as string]: 3 }}>
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TriangleAlert className="size-5 text-[var(--status-critical)]" aria-hidden />
-              Needs attention
-            </CardTitle>
-            <CardDescription>Below break-even 2+ consecutive years, sorted by cumulative loss</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TourList items={attention} years={years} empty="No tours below break-even for 2+ consecutive years." />
-          </CardContent>
+          <CardHeader
+            image={<WarningRegular fontSize={24} className="text-[var(--colorStatusDangerForeground1)]" aria-hidden />}
+            header={<Subtitle1 as="h2">Needs attention</Subtitle1>}
+            description={
+              <Caption1 className="text-[var(--colorNeutralForeground3)]">
+                Below break-even 2+ consecutive years, sorted by cumulative loss
+              </Caption1>
+            }
+          />
+          <TourList items={attention} years={years} empty="No tours below break-even for 2+ consecutive years." />
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="size-5 text-[var(--status-good)]" aria-hidden />
-              Reliable performers
-            </CardTitle>
-            <CardDescription>Above break-even every year in range, highest load factor first</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TourList items={reliable} years={years} empty="No tours above break-even in every year of this range." />
-          </CardContent>
+          <CardHeader
+            image={<ShieldCheckmarkRegular fontSize={24} className="text-[var(--colorStatusSuccessForeground1)]" aria-hidden />}
+            header={<Subtitle1 as="h2">Reliable performers</Subtitle1>}
+            description={
+              <Caption1 className="text-[var(--colorNeutralForeground3)]">
+                Above break-even every year in range, highest load factor first
+              </Caption1>
+            }
+          />
+          <TourList items={reliable} years={years} empty="No tours above break-even in every year of this range." />
         </Card>
       </section>
     </div>
@@ -273,21 +284,24 @@ function TourList({
   years: Year[];
   empty: string;
 }) {
-  if (!items.length) return <p className="py-6 text-center text-sm text-muted-foreground">{empty}</p>;
+  if (!items.length)
+    return <Body1 className="py-6 text-center text-[var(--colorNeutralForeground3)]">{empty}</Body1>;
   return (
-    <ul className="-mx-2 divide-y divide-rule">
+    <ul className="m-0 flex list-none flex-col p-0">
       {items.slice(0, 8).map((s, i) => (
         <li key={s.tour.id}>
+          {i > 0 && <Divider />}
           <Link
             href={`/tours/${s.tour.slug}`}
-            className="group flex min-h-14 items-center gap-3 rounded-md px-2 py-2.5 transition-colors duration-200 hover:bg-muted/70"
+            className="-mx-2 flex min-h-14 items-center gap-3 rounded-[var(--borderRadiusMedium)] px-2 py-2 text-inherit no-underline hover:bg-[var(--colorSubtleBackgroundHover)]"
           >
-            <span className="font-display w-6 text-xl leading-none text-muted-foreground/70 tabular">{i + 1}</span>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{s.tour.name}</div>
-              <div className="truncate text-xs text-muted-foreground">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Text weight="semibold" truncate wrap={false}>
+                {s.tour.name}
+              </Text>
+              <Caption1 truncate wrap={false} className="text-[var(--colorNeutralForeground3)]">
                 {s.tour.region} · {s.tour.type}
-              </div>
+              </Caption1>
             </div>
             <div className="hidden gap-1 sm:flex" aria-label="Load factor by year">
               {years.map((y) => (
@@ -296,24 +310,21 @@ function TourList({
                 </div>
               ))}
             </div>
-            <div className="w-20 text-right">
-              <div
-                className={`font-mono text-sm font-medium tabular ${s.total.margin < 0 ? "text-[var(--text-critical)]" : "text-ink"}`}
-              >
+            <div className="flex w-20 flex-col items-end">
+              <Text weight="semibold" className={`tabular ${s.total.margin < 0 ? negative : ""}`}>
                 {fmtMoney(s.total.margin, { signed: true })}
-              </div>
-              <div className="eyebrow text-[0.625rem]">cum. margin</div>
+              </Text>
+              <Caption1 className="text-[var(--colorNeutralForeground3)]">cum. margin</Caption1>
             </div>
-            <ChevronRight className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-ink" aria-hidden />
+            <ChevronRightRegular className="text-[var(--colorNeutralForeground3)]" aria-hidden />
           </Link>
         </li>
       ))}
       {items.length > 8 && (
-        <li className="px-2 pt-2.5 text-xs text-muted-foreground">
-          +{items.length - 8} more in{" "}
-          <Link href="/tours" className="underline underline-offset-2">
-            Tour comparison
-          </Link>
+        <li className="pt-2">
+          <Caption1 className="text-[var(--colorNeutralForeground3)]">
+            +{items.length - 8} more in <Link href="/tours">Tour comparison</Link>
+          </Caption1>
         </li>
       )}
     </ul>

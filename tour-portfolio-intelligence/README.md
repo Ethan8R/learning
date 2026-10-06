@@ -24,9 +24,9 @@ Lint and typecheck: `npm run lint` and `npx tsc --noEmit`.
 
 ## Stack
 
-Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui (Base UI primitives) · Recharts 3 · lucide icons.
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 (layout only) · **Fluent UI React v9** (`@fluentui/react-components`, `@fluentui/react-icons`) · Recharts 3.
 
-The visual design ("ship's manifest": paper, ink and brass, with Instrument Serif, Schibsted Grotesk and IBM Plex Mono) is documented in [`design-system/MASTER.md`](design-system/MASTER.md).
+The UI follows Microsoft's Fluent 2 design system. The component mapping, tokens and setup notes are in [`design-system/MASTER.md`](design-system/MASTER.md).
 
 ## Screens
 

@@ -3,60 +3,39 @@
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Body1,
+  Caption1,
+  Card,
+  SearchBox,
+  Table,
+  TableBody,
+  TableCell,
+  TableCellLayout,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+  Text,
+  Title2,
+  ToggleButton,
+} from "@fluentui/react-components";
 import { useFilters } from "@/components/filters-provider";
 import { BandLegend, LfCell, StatusBadge, TrendArrow } from "@/components/indicators";
 import { summarizeTours, yearsInRange, type TourStatus, type TourSummary } from "@/lib/analytics";
 import { fmtMoney } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 const STATUSES: TourStatus[] = ["Keep", "Watch", "Rework", "Retire candidate"];
 const STATUS_RANK: Record<TourStatus, number> = { Keep: 0, Watch: 1, Rework: 2, "Retire candidate": 3 };
+const negative = "text-[var(--colorStatusDangerForeground1)]";
 
 type SortKey = "name" | "trend" | "runs" | "cancelled" | "margin" | "status" | `y${number}`;
+type SortState = { key: SortKey; dir: "ascending" | "descending" };
 
 export default function ToursPage() {
   return (
     <Suspense>
       <ToursTable />
     </Suspense>
-  );
-}
-
-type SortState = { key: SortKey; dir: "asc" | "desc" };
-
-function SortHead({
-  k,
-  sort,
-  onSort,
-  children,
-  className,
-}: {
-  k: SortKey;
-  sort: SortState;
-  onSort: (k: SortKey) => void;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const active = sort.key === k;
-  const Icon = !active ? ArrowUpDown : sort.dir === "asc" ? ArrowUp : ArrowDown;
-  return (
-    <TableHead className={className} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-      <button
-        type="button"
-        onClick={() => onSort(k)}
-        className={cn(
-          "inline-flex min-h-8 items-center gap-1 font-mono text-[0.6875rem] font-medium tracking-[0.06em] uppercase hover:text-ink",
-          active ? "text-ink" : "text-muted-foreground",
-        )}
-      >
-        {children}
-        <Icon className="size-3.5" aria-hidden />
-      </button>
-    </TableHead>
   );
 }
 
@@ -70,7 +49,7 @@ function ToursTable() {
   const [status, setStatus] = useState<TourStatus | "All">(
     initialStatus && STATUSES.includes(initialStatus) ? initialStatus : "All",
   );
-  const [sort, setSort] = useState<SortState>({ key: "status", dir: "desc" });
+  const [sort, setSort] = useState<SortState>({ key: "status", dir: "descending" });
 
   const summaries = useMemo(() => summarizeTours(filters), [filters]);
 
@@ -107,144 +86,167 @@ function ToursTable() {
         const va = value(a);
         const vb = value(b);
         const c = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number);
-        return sort.dir === "asc" ? c : -c;
+        return sort.dir === "ascending" ? c : -c;
       });
   }, [summaries, query, status, sort]);
 
-  const toggleSort = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "name" ? "asc" : "desc" }));
+  const headProps = (key: SortKey) => ({
+    sortDirection: sort.key === key ? sort.dir : undefined,
+    onClick: () =>
+      setSort((s) =>
+        s.key === key
+          ? { key, dir: s.dir === "ascending" ? "descending" : "ascending" }
+          : { key, dir: key === "name" ? "ascending" : "descending" },
+      ),
+  });
 
   const counts = Object.fromEntries(STATUSES.map((s) => [s, summaries.filter((x) => x.status === s).length]));
 
   return (
-    <div className="space-y-4">
-      <header className="rise flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Tour comparison · {summaries.length} tours · {years[0]}
-            {years.length > 1 ? `–${years.at(-1)}` : ""}</p>
-          <h1 className="mt-3 text-[2.25rem] leading-[1.05] text-ink md:text-[3rem]">Every tour, side by side.</h1>
-          <p className="mt-2 max-w-[60ch] text-sm text-muted-foreground">
-            Load factor per year, coloured against each tour&apos;s own break-even. Select a row for the departure-level
-            detail.
-          </p>
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <Title2 as="h1">Tour comparison</Title2>
+          <Body1 className="text-[var(--colorNeutralForeground2)]">
+            Every tour side by side. Load factor per year, coloured against each tour&apos;s break-even. Select a row
+            for departure-level detail.
+          </Body1>
         </div>
         <BandLegend />
       </header>
 
-      <div className="rise flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 1 }}>
-        <div className="relative w-full sm:w-72">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tours, regions, types"
-            className="h-10 bg-card pl-8"
-            aria-label="Search tours"
-          />
-        </div>
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchBox
+          value={query}
+          onChange={(_, d) => setQuery(d.value)}
+          placeholder="Search tours, regions, types"
+          aria-label="Search tours"
+          className="w-full sm:w-80"
+        />
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
           {(["All", ...STATUSES] as const).map((s) => (
-            <button
+            <ToggleButton
               key={s}
-              type="button"
+              shape="circular"
+              size="small"
+              checked={status === s}
+              appearance={status === s ? "primary" : "secondary"}
               onClick={() => setStatus(s)}
-              aria-pressed={status === s}
-              className={cn(
-                "min-h-9 rounded-full border px-3.5 text-xs font-medium transition-colors duration-200",
-                status === s
-                  ? "border-ink bg-ink text-primary-foreground"
-                  : "border-rule bg-card text-muted-foreground hover:border-ink/40 hover:text-ink",
-              )}
             >
-              {s}
-              <span className="ml-1.5 font-mono opacity-70 tabular">{s === "All" ? summaries.length : counts[s]}</span>
-            </button>
+              {s} ({s === "All" ? summaries.length : counts[s]})
+            </ToggleButton>
           ))}
         </div>
       </div>
 
-      <Card className="rise py-0" style={{ ["--i" as string]: 2 }}>
-        <CardContent className="px-0">
-          <Table>
-            <TableHeader className="bg-[#f4efe2]">
+      <Card className="p-0">
+        <div className="overflow-x-auto">
+          <Table sortable aria-label="Tour comparison" className="min-w-[960px]">
+            <TableHeader className="bg-[var(--colorNeutralBackground2)]">
               <TableRow>
-                <SortHead sort={sort} onSort={toggleSort} k="name" className="min-w-56 pl-4">Tour</SortHead>
+                <TableHeaderCell {...headProps("name")} style={{ width: "26%" }}>
+                  Tour
+                </TableHeaderCell>
                 {years.map((y) => (
-                  <SortHead sort={sort} onSort={toggleSort} key={y} k={`y${y}`} className="w-24 text-center">
+                  <TableHeaderCell key={y} {...headProps(`y${y}`)} style={{ width: 92 }}>
                     {y}
-                  </SortHead>
+                  </TableHeaderCell>
                 ))}
-                <SortHead sort={sort} onSort={toggleSort} k="trend">Trend</SortHead>
-                <SortHead sort={sort} onSort={toggleSort} k="runs" className="text-right">Run / cancelled</SortHead>
-                <SortHead sort={sort} onSort={toggleSort} k="margin" className="text-right">Cum. margin</SortHead>
-                <SortHead sort={sort} onSort={toggleSort} k="status" className="pr-4">Status</SortHead>
+                <TableHeaderCell {...headProps("trend")} style={{ width: 130 }}>
+                  Trend
+                </TableHeaderCell>
+                <TableHeaderCell {...headProps("runs")} style={{ width: 120 }}>
+                  Run / cancelled
+                </TableHeaderCell>
+                <TableHeaderCell {...headProps("margin")} style={{ width: 120 }}>
+                  Cum. margin
+                </TableHeaderCell>
+                <TableHeaderCell {...headProps("status")} style={{ width: 210 }}>
+                  Status
+                </TableHeaderCell>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((s) => (
                 <TableRow
                   key={s.tour.id}
-                  className="cursor-pointer border-rule transition-colors duration-150 hover:bg-[#f4efe2]"
+                  className="cursor-pointer"
                   onClick={() => router.push(`/tours/${s.tour.slug}`)}
                 >
-                  <TableCell className="pl-4">
-                    <Link
-                      href={`/tours/${s.tour.slug}`}
-                      className="font-medium text-ink underline-offset-4 hover:underline"
-                      onClick={(e) => e.stopPropagation()}
+                  <TableCell>
+                    <TableCellLayout
+                      description={
+                        <Caption1 className="text-[var(--colorNeutralForeground3)]">
+                          {s.tour.region} · {s.tour.type}
+                        </Caption1>
+                      }
                     >
-                      {s.tour.name}
-                    </Link>
-                    <div className="text-xs text-muted-foreground">
-                      {s.tour.region} · {s.tour.type}
-                    </div>
+                      <Link
+                        href={`/tours/${s.tour.slug}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-semibold text-[var(--colorNeutralForeground1)] no-underline hover:underline"
+                      >
+                        {s.tour.name}
+                      </Link>
+                    </TableCellLayout>
                   </TableCell>
                   {years.map((y) => (
-                    <TableCell key={y} className="px-1.5">
+                    <TableCell key={y} className="py-1.5">
                       <LfCell lf={s.byYear[y]?.lf} beLf={s.byYear[y]?.beLf} />
                     </TableCell>
                   ))}
                   <TableCell>
                     <TrendArrow trend={s.trend} slope={s.slope} />
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular">
-                    {s.total.operated}
-                    <span className="text-muted-foreground"> / </span>
-                    <span className={s.total.cancelled ? "font-medium text-[var(--text-critical)]" : "text-muted-foreground"}>
-                      {s.total.cancelled}
-                    </span>
-                    {s.total.upcoming > 0 && (
-                      <div className="text-[11px] text-muted-foreground">+{s.total.upcoming} upcoming</div>
-                    )}
+                  <TableCell>
+                    <TableCellLayout
+                      description={
+                        s.total.upcoming > 0 ? (
+                          <Caption1 className="text-[var(--colorNeutralForeground3)]">+{s.total.upcoming} upcoming</Caption1>
+                        ) : undefined
+                      }
+                    >
+                      <span className="tabular">
+                        {s.total.operated} /{" "}
+                        <span className={s.total.cancelled ? `font-semibold ${negative}` : "text-[var(--colorNeutralForeground3)]"}>
+                          {s.total.cancelled}
+                        </span>
+                      </span>
+                    </TableCellLayout>
                   </TableCell>
-                  <TableCell
-                    className={cn("text-right font-mono font-medium tabular", s.total.margin < 0 && "text-[var(--text-critical)]")}
-                  >
-                    {fmtMoney(s.total.margin, { signed: true })}
+                  <TableCell>
+                    <Text weight="semibold" className={`tabular ${s.total.margin < 0 ? negative : ""}`}>
+                      {fmtMoney(s.total.margin, { signed: true })}
+                    </Text>
                   </TableCell>
-                  <TableCell className="pr-4">
-                    <StatusBadge status={s.status} />
-                    <div className="mt-1 max-w-52 text-[11px] leading-snug whitespace-normal text-muted-foreground">
-                      {s.statusReason}
-                    </div>
+                  <TableCell>
+                    <TableCellLayout
+                      description={
+                        <Caption1 className="text-[var(--colorNeutralForeground3)]">{s.statusReason}</Caption1>
+                      }
+                    >
+                      <StatusBadge status={s.status} />
+                    </TableCellLayout>
                   </TableCell>
                 </TableRow>
               ))}
               {!rows.length && (
                 <TableRow>
-                  <TableCell colSpan={years.length + 5} className="py-12 text-center text-muted-foreground">
-                    No tours match. Try clearing the search or widening the filters.
+                  <TableCell colSpan={years.length + 5}>
+                    <Body1 className="block py-10 text-center text-[var(--colorNeutralForeground3)]">
+                      No tours match. Try clearing the search or widening the filters.
+                    </Body1>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        </CardContent>
+        </div>
       </Card>
-      <p className="text-xs text-muted-foreground">
-        Showing {rows.length} of {summaries.length} tours. Cumulative margin = revenue − contracted cost − rebooking
-        cost across the selected years, including projected margin on upcoming departures.
-      </p>
+      <Caption1 className="text-[var(--colorNeutralForeground3)]">
+        Showing {rows.length} of {summaries.length} tours. Cumulative margin = revenue − contracted cost − rebooking cost
+        across the selected years, including projected margin on upcoming departures.
+      </Caption1>
     </div>
   );
 }

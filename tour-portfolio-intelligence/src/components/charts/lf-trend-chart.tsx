@@ -61,8 +61,8 @@ export function LfTrendChart({ data, split, breakEven }: { data: Row[]; split: "
                 name={s.label}
                 stroke={s.color}
                 strokeWidth={2}
-                dot={{ r: 4, fill: s.color, stroke: "var(--card)", strokeWidth: 2 }}
-                activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }}
+                dot={{ r: 4, fill: s.color, stroke: "var(--colorNeutralBackground1)", strokeWidth: 2 }}
+                activeDot={{ r: 5, stroke: "var(--colorNeutralBackground1)", strokeWidth: 2 }}
                 connectNulls
                 isAnimationActive={false}
               />

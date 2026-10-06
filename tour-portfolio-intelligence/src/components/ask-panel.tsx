@@ -3,10 +3,28 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Bot, SendHorizontal, Sparkles } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  Avatar,
+  Badge,
+  Body1,
+  Button,
+  DrawerBody,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerHeaderTitle,
+  Input,
+  MessageBar,
+  MessageBarBody,
+  OverlayDrawer,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+} from "@fluentui/react-components";
+import { DismissRegular, SendRegular, SparkleFilled, SparkleRegular } from "@fluentui/react-icons";
 import { useFilters } from "@/components/filters-provider";
 import { AXIS, GRID, LegendItem, TooltipCard, pctTick } from "@/components/charts/chart-kit";
 import {
@@ -79,98 +97,99 @@ export function AskPanel() {
   const remaining = SUGGESTIONS.filter((s) => !asked.has(s.q));
 
   return (
-    <Sheet open={askOpen} onOpenChange={setAskOpen}>
-      <SheetContent
-        side="right"
-        className="w-full gap-0 border-l-0 bg-paper p-0 sm:max-w-[520px] data-[side=right]:sm:max-w-[520px] [&>[data-slot=sheet-close]]:top-4 [&>[data-slot=sheet-close]]:text-[#f6f1e4] [&>[data-slot=sheet-close]]:hover:bg-white/10 [&>[data-slot=sheet-close]]:hover:text-white"
-      >
-        <SheetHeader className="border-b border-white/10 bg-ink pr-12 text-[#f6f1e4]">
-          <SheetTitle className="font-display flex items-center gap-2 text-[1.75rem] leading-none font-normal text-[#f6f1e4]">
-            <Sparkles className="size-4 text-[#e3b261]" aria-hidden />
+    <OverlayDrawer
+      position="end"
+      size="medium"
+      open={askOpen}
+      onOpenChange={(_, d) => setAskOpen(d.open)}
+      style={{ width: "min(540px, 100vw)" }}
+    >
+      <DrawerHeader>
+        <DrawerHeaderTitle
+          action={<Button appearance="subtle" aria-label="Close" icon={<DismissRegular />} onClick={() => setAskOpen(false)} />}
+        >
+          <span className="flex items-center gap-2">
+            <SparkleFilled className="text-[var(--colorBrandForeground1)]" aria-hidden />
             Ask the data
-            <span className="rounded-full border border-[#e3b261]/60 px-2 py-0.5 font-mono text-[0.625rem] font-medium tracking-[0.08em] text-[#f0c77f] uppercase">
+            <Badge appearance="tint" color="brand">
               Demo
-            </span>
-          </SheetTitle>
-          <SheetDescription className="text-[#f6f1e4]/70">
+            </Badge>
+          </span>
+        </DrawerHeaderTitle>
+        <MessageBar intent="info">
+          <MessageBarBody>
             Canned answers computed from the sample dataset (all regions, 2023–2026). No live AI model is connected.
-          </SheetDescription>
-        </SheetHeader>
+          </MessageBarBody>
+        </MessageBar>
+      </DrawerHeader>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+      <DrawerBody>
+        <div className="flex flex-col gap-4 pb-2">
           {messages.length === 0 && (
-            <div className="rounded-lg border border-dashed border-rule p-4 text-sm text-muted-foreground">
+            <Body1 className="rounded-[var(--borderRadiusMedium)] border border-dashed border-[var(--colorNeutralStroke1)] p-4 text-[var(--colorNeutralForeground3)]">
               Ask about load factor, cancellations or which tours to keep. Pick a suggested question to see how an
               analytics agent would answer.
-            </div>
+            </Body1>
           )}
           {messages.map((m) =>
             m.role === "user" ? (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-ink px-3.5 py-2 text-sm text-primary-foreground">
-                  {m.text}
+                <div className="max-w-[85%] rounded-[var(--borderRadiusXLarge)] bg-[var(--colorBrandBackground)] px-3.5 py-2 text-[var(--colorNeutralForegroundOnBrand)]">
+                  <Body1>{m.text}</Body1>
                 </div>
               </div>
             ) : (
               <div key={m.id} className="flex gap-2.5">
-                <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-[#f3e2c0] text-[#7a4f12]">
-                  <Bot className="size-4" aria-hidden />
-                </span>
-                <div className="min-w-0 flex-1 space-y-3 rounded-2xl rounded-tl-sm border border-rule bg-card px-3.5 py-3 text-sm leading-relaxed">
+                <Avatar
+                  size={28}
+                  icon={<SparkleRegular />}
+                  color="brand"
+                  aria-hidden
+                  className="shrink-0"
+                />
+                <div
+                  className="flex min-w-0 flex-1 flex-col gap-3 rounded-[var(--borderRadiusXLarge)] bg-[var(--colorNeutralBackground1)] px-3.5 py-3 text-[14px] leading-5"
+                  style={{ boxShadow: "var(--shadow4)" }}
+                >
                   <div>{m.text}</div>
                   {m.visual}
                 </div>
               </div>
             ),
           )}
-          {thinking && (
-            <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
-              <span className="grid size-7 place-items-center rounded-full bg-[#f3e2c0] text-[#7a4f12]">
-                <Bot className="size-4" aria-hidden />
-              </span>
-              <span className="animate-pulse">Analysing departures…</span>
-            </div>
-          )}
+          {thinking && <Spinner size="tiny" label="Analysing departures…" labelPosition="after" />}
           <div ref={endRef} />
         </div>
+      </DrawerBody>
 
-        <div className="space-y-3 border-t border-rule bg-paper px-4 py-3">
-          {remaining.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {remaining.map((s) => (
-                <button
-                  key={s.q}
-                  type="button"
-                  disabled={thinking}
-                  onClick={() => ask(s.q)}
-                  className="min-h-8 rounded-full border border-rule bg-card px-3 py-1 text-left text-xs font-medium text-ink transition-colors duration-200 hover:border-brass hover:bg-[#f7ecd6] disabled:opacity-50"
-                >
-                  {s.q}
-                </button>
-              ))}
-            </div>
-          )}
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              ask(input);
-            }}
-          >
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about your tours…"
-              aria-label="Ask a question"
-              className="bg-card"
-            />
-            <Button type="submit" size="icon" disabled={!input.trim() || thinking} aria-label="Send">
-              <SendHorizontal aria-hidden />
-            </Button>
-          </form>
-        </div>
-      </SheetContent>
-    </Sheet>
+      <DrawerFooter className="flex-col items-stretch gap-3 border-t border-[var(--colorNeutralStroke2)]">
+        {remaining.length > 0 && (
+          <div className="flex w-full flex-wrap gap-1.5">
+            {remaining.map((s) => (
+              <Button key={s.q} size="small" shape="circular" disabled={thinking} onClick={() => ask(s.q)}>
+                {s.q}
+              </Button>
+            ))}
+          </div>
+        )}
+        <form
+          className="flex w-full gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            ask(input);
+          }}
+        >
+          <Input
+            value={input}
+            onChange={(_, d) => setInput(d.value)}
+            placeholder="Ask a question about your tours…"
+            aria-label="Ask a question"
+            className="flex-1"
+          />
+          <Button type="submit" appearance="primary" icon={<SendRegular />} disabled={!input.trim() || thinking} aria-label="Send" />
+        </form>
+      </DrawerFooter>
+    </OverlayDrawer>
   );
 }
 
@@ -181,7 +200,11 @@ export function AskPanel() {
 function TourLink({ slug, children }: { slug: string; children: ReactNode }) {
   const { setAskOpen } = useFilters();
   return (
-    <Link href={`/tours/${slug}`} onClick={() => setAskOpen(false)} className="font-medium underline-offset-2 hover:underline">
+    <Link
+      href={`/tours/${slug}`}
+      onClick={() => setAskOpen(false)}
+      className="font-semibold text-[var(--colorBrandForegroundLink)] no-underline hover:underline"
+    >
       {children}
     </Link>
   );
@@ -189,29 +212,29 @@ function TourLink({ slug, children }: { slug: string; children: ReactNode }) {
 
 function MiniTable({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-xs">
-        <thead className="bg-muted/50 text-muted-foreground">
-          <tr>
+    <div className="overflow-x-auto rounded-[var(--borderRadiusMedium)] border border-[var(--colorNeutralStroke2)]">
+      <Table size="small" aria-label="Answer details">
+        <TableHeader className="bg-[var(--colorNeutralBackground2)]">
+          <TableRow>
             {head.map((h, i) => (
-              <th key={h} className={`px-2.5 py-1.5 font-medium ${i ? "text-right" : "text-left"}`}>
+              <TableHeaderCell key={h} style={i === 0 ? { width: "44%" } : undefined}>
                 {h}
-              </th>
+              </TableHeaderCell>
             ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y">
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((r, i) => (
-            <tr key={i}>
+            <TableRow key={i}>
               {r.map((c, j) => (
-                <td key={j} className={`px-2.5 py-1.5 tabular ${j ? "text-right" : ""}`}>
+                <TableCell key={j} className="tabular">
                   {c}
-                </td>
+                </TableCell>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -230,7 +253,7 @@ function dropCandidates(): Answer {
           they have lost <strong>{fmtMoney(-loss)}</strong>, including {fmtMoney(cancelCost)} in cancellation and rebooking
           cost. They are the strongest candidates to drop from the 2028 programme.
         </p>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-[var(--colorNeutralForeground3)]">
           Before cutting, check the seasonal ones: where spring departures fill and autumn ones do not, trimming
           autumn dates may recover the tour without dropping it.
         </p>
@@ -245,7 +268,7 @@ function dropCandidates(): Answer {
           </TourLink>,
           `${s.belowYears.length} of ${s.years.length}`,
           fmtPct(s.total.lf),
-          <span key="m" className="text-[var(--text-critical)]">
+          <span key="m" className="text-[var(--colorStatusDangerForeground1)]">
             {fmtMoney(s.total.margin, { signed: true })}
           </span>,
         ])}
@@ -272,7 +295,7 @@ function regionAnswer(): Answer {
     ),
     visual: (
       <div>
-        <div className="mb-1 text-xs text-muted-foreground">Year-to-year swing in load factor (std. dev., pts). Lower is steadier.</div>
+        <div className="mb-1 text-xs text-[var(--colorNeutralForeground3)]">Year-to-year swing in load factor (std. dev., pts). Lower is steadier.</div>
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
@@ -280,7 +303,7 @@ function regionAnswer(): Answer {
               <XAxis type="number" {...AXIS} tickFormatter={(v) => `${v.toFixed(0)}`} />
               <YAxis type="category" dataKey="region" {...AXIS} axisLine={false} width={182} interval={0} />
               <Tooltip
-                cursor={{ fill: "var(--muted)", opacity: 0.6 }}
+                cursor={{ fill: "var(--colorNeutralBackground3)", opacity: 0.6 }}
                 content={({ active, payload }) =>
                   active && payload?.length ? (
                     <TooltipCard
@@ -331,7 +354,7 @@ function cancellationAnswer(): Answer {
               <XAxis dataKey="year" {...AXIS} />
               <YAxis {...AXIS} axisLine={false} tickFormatter={(v) => fmtMoney(v)} width={56} />
               <Tooltip
-                cursor={{ fill: "var(--muted)", opacity: 0.6 }}
+                cursor={{ fill: "var(--colorNeutralBackground3)", opacity: 0.6 }}
                 content={({ active, payload, label }) =>
                   active && payload?.length ? (
                     <TooltipCard
@@ -344,8 +367,8 @@ function cancellationAnswer(): Answer {
                   ) : null
                 }
               />
-              <Bar dataKey="demand" stackId="c" fill="var(--series-1)" stroke="var(--card)" strokeWidth={1} isAnimationActive={false} />
-              <Bar dataKey="lowWater" stackId="c" fill="var(--series-2)" stroke="var(--card)" strokeWidth={1} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="demand" stackId="c" fill="var(--series-1)" stroke="var(--colorNeutralBackground1)" strokeWidth={1} isAnimationActive={false} />
+              <Bar dataKey="lowWater" stackId="c" fill="var(--series-2)" stroke="var(--colorNeutralBackground1)" strokeWidth={1} radius={[4, 4, 0, 0]} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -395,8 +418,8 @@ function lowWaterAnswer(): Answer {
                   ) : null
                 }
               />
-              <Line dataKey="rhineDanube" stroke="var(--series-1)" strokeWidth={2} dot={{ r: 3.5, fill: "var(--series-1)", stroke: "var(--card)", strokeWidth: 1.5 }} isAnimationActive={false} />
-              <Line dataKey="otherRivers" stroke="var(--series-2)" strokeWidth={2} dot={{ r: 3.5, fill: "var(--series-2)", stroke: "var(--card)", strokeWidth: 1.5 }} connectNulls isAnimationActive={false} />
+              <Line dataKey="rhineDanube" stroke="var(--series-1)" strokeWidth={2} dot={{ r: 3.5, fill: "var(--series-1)", stroke: "var(--colorNeutralBackground1)", strokeWidth: 1.5 }} isAnimationActive={false} />
+              <Line dataKey="otherRivers" stroke="var(--series-2)" strokeWidth={2} dot={{ r: 3.5, fill: "var(--series-2)", stroke: "var(--colorNeutralBackground1)", strokeWidth: 1.5 }} connectNulls isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

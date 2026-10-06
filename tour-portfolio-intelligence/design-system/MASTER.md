@@ -1,31 +1,42 @@
-# Design system: Tour Portfolio Intelligence
+# Design system: Microsoft Fluent 2 (Fluent UI React v9)
 
-Direction: **ship's manifest**. The look is an editorial, ledger-like interface for an executive audience. Most of the page is warm paper and ink navy, with brass as the single accent. Data reads like a printed departures register: serif display figures, mono labels and hairline rules.
+The dashboard follows [Fluent 2](https://fluent2.microsoft.design/) and is built on [Fluent UI React v9](https://github.com/microsoft/fluentui) (`@fluentui/react-components` and `@fluentui/react-icons`). It uses the stock `webLightTheme`. Only the product name is ours; there is no Microsoft branding or logo.
 
-## Tokens (`src/app/globals.css`)
+## Setup
 
-| Role | Value | Use |
-|---|---|---|
-| Paper | `#f3efe5` | Page background, with a faint grain |
-| Card | `#fbf9f4` | Panels and tables |
-| Ink | `#10212e` | Text, masthead, primary actions, tooltips |
-| Brass | `#b5741c` / light `#e3b261` | Accent, focus rings, active nav and range |
-| Rule | `#dcd4c2` | Hairlines, borders, ledger dividers |
-| Muted text | `#5d6670` | Secondary text (about 5:1 on paper) |
-| Series 1 / 2 | `#0b6fa4` river / `#c9781a` brass | Chart series; the pair passes the dataviz validator on `#fbf9f4` |
-| Status | good `#2f8a4c`, warning `#e0a12a`, critical `#c2412f` | Reserved for break-even state. Always paired with an icon or label. |
+- `src/app/providers.tsx` wraps the app in `RendererProvider` + `SSRProvider` + `FluentProvider`. Griffel styles are flushed into `<head>` with `useServerInsertedHTML`, so server-rendered pages arrive already styled.
+- Do **not** put layout classes on `FluentProvider`. Fluent copies its classes onto portal containers (tooltips, drawers, dropdowns), which would then cover the page. Layout lives on an inner `div`.
+- Tailwind is used for layout only (grid, flex, gap, padding). Colours, type, radii and shadows come from Fluent tokens, which `FluentProvider` exposes as CSS variables, for example `var(--colorNeutralForeground3)` and `var(--shadow4)`.
 
-## Type
+## Component mapping
 
-- **Display:** Instrument Serif, used for headlines, panel titles and hero figures.
-- **Body:** Schibsted Grotesk, used for UI text.
-- **Ledger:** IBM Plex Mono, used for eyebrows (`.eyebrow`), column heads, badges, axis ticks and money columns.
+| UI element | Fluent component |
+|---|---|
+| Page navigation | `TabList` / `Tab` with icons |
+| Global filters | `Field` + `Dropdown` / `Option` |
+| Primary action | `Button appearance="primary"` |
+| Sample-data marker | `Badge appearance="tint" color="warning"` + `Tooltip` |
+| Panels and KPIs | `Card` + `CardHeader`, type ramp (`LargeTitle`, `Title2`, `Subtitle1`, `Body1`, `Caption1`) |
+| Alerts and explanations | `MessageBar` (`error` for retire candidates, `info` for notes) |
+| Status (Keep / Watch / Rework / Retire) | `Badge appearance="tint"`: `success` / `warning` / `severe` / `danger`, each with an icon |
+| Tables | `Table` (sortable `TableHeaderCell`, `TableCellLayout`) |
+| Search and status filter | `SearchBox`, circular `ToggleButton`s |
+| Chart view switches | `TabList size="small" appearance="subtle-circular"` |
+| Breadcrumb | `Breadcrumb` / `BreadcrumbButton` |
+| Ask the data | `OverlayDrawer` (end), `Avatar`, `Spinner`, `Input`, `MessageBar` |
 
-## Rules
+## Charts
 
-- Panels have a 1px rule border and a soft, low shadow. There are no heavy shadows or gradients.
-- KPI and stat rows are a single ledger panel split by 1px rules, not separate floating cards.
-- The year filter is a route line: click a stop for one year, then a second stop to extend the range.
-- The page entrance uses one staggered rise (`.rise`, `--i`). It is disabled under `prefers-reduced-motion`.
-- Focus is shown as a 2px brass outline. Interactive targets are at least 36 to 44px tall.
-- Never use purple or "AI gradient" styling. The AI insight is an ink panel with brass labels, marked Demo.
+Charts stay on Recharts but use Fluent palette tokens (`src/app/globals.css`):
+
+- **Series:** brand `#0f6cbd` and dark orange `#da3b01`. The pair passes the dataviz palette validator (CVD, contrast) on white.
+- **Status fills:** green `#107c10`, marigold `#eaa300`, red `#d13438` (the Fluent palette's `Background3` steps).
+- **Heatmap cells:** `colorPaletteRedBackground2`, `colorPaletteMarigoldBackground2`, `colorPaletteGreenBackground2`.
+- **Tooltips:** match Fluent flyouts (white, `shadow16`, `borderRadiusMedium`).
+
+## Accessibility
+
+- There is a skip link, and Fluent provides its own focus indicators.
+- Sortable headers expose `aria-sort`.
+- Status is never shown by colour alone: there is always an icon and a label.
+- Motion is reduced under `prefers-reduced-motion`.

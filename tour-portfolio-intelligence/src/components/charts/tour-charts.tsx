@@ -20,7 +20,7 @@ export function TourYearChart({ rows }: { rows: { year: string; lf: number; beLf
         <LegendItem color={BAND_FILL.above} label="Above break-even" />
         <LegendItem color={BAND_FILL.near} label="Within 5 pts" />
         <LegendItem color={BAND_FILL.below} label="Below break-even" />
-        <LegendItem color="var(--foreground)" label="Break-even LF" kind="dash" />
+        <LegendItem color="var(--colorNeutralForeground1)" label="Break-even LF" kind="dash" />
       </div>
       <div className="h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -29,14 +29,14 @@ export function TourYearChart({ rows }: { rows: { year: string; lf: number; beLf
             <XAxis dataKey="year" {...AXIS} />
             <YAxis {...AXIS} axisLine={false} domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} tickFormatter={pctTick} width={48} />
             <Tooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.6 }}
+              cursor={{ fill: "var(--colorNeutralBackground3)", opacity: 0.6 }}
               content={({ active, payload, label }) =>
                 active && payload?.length ? (
                   <TooltipCard
                     title={label}
                     rows={[
                       { label: "Load factor", value: fmtPct(payload[0].payload.lf, 1), swatch: BAND_FILL[bandOf(payload[0].payload.lf, payload[0].payload.beLf)] },
-                      { label: "Break-even LF", value: fmtPct(payload[0].payload.beLf, 1), swatch: "#f6f1e4", dashed: true },
+                      { label: "Break-even LF", value: fmtPct(payload[0].payload.beLf, 1), swatch: "var(--colorNeutralForeground1)", dashed: true },
                       { label: "Departures", value: payload[0].payload.departures },
                     ]}
                   />
@@ -48,7 +48,7 @@ export function TourYearChart({ rows }: { rows: { year: string; lf: number; beLf
                 <Cell key={r.year} fill={BAND_FILL[bandOf(r.lf, r.beLf)]} />
               ))}
             </Bar>
-            <Line dataKey="beLf" stroke="var(--foreground)" strokeDasharray="5 4" strokeWidth={1.5} dot={false} type="step" isAnimationActive={false} />
+            <Line dataKey="beLf" stroke="var(--colorNeutralForeground1)" strokeDasharray="5 4" strokeWidth={1.5} dot={false} type="step" isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -59,8 +59,8 @@ export function TourYearChart({ rows }: { rows: { year: string; lf: number; beLf
 const DEP_FILL = {
   above: "var(--series-1)",
   below: "var(--status-critical)",
-  cancelled: "#b9b8b1",
-  upcoming: "color-mix(in oklab, var(--series-1) 45%, white)",
+  cancelled: "#bdbdbd", // Fluent grey 74
+  upcoming: "#96c6fa", // Fluent web brand ramp, step 120
 };
 
 const depKind = (d: Departure) =>
@@ -75,7 +75,7 @@ export function DepartureChart({ departures }: { departures: Departure[] }) {
         <LegendItem color={DEP_FILL.below} label="Booked, below break-even" />
         <LegendItem color={DEP_FILL.cancelled} label="Cancelled" />
         <LegendItem color={DEP_FILL.upcoming} label="Upcoming" />
-        <LegendItem color="var(--foreground)" label="Break-even pax" kind="dash" />
+        <LegendItem color="var(--colorNeutralForeground1)" label="Break-even pax" kind="dash" />
         <LegendItem color="var(--chart-axis)" label="Capacity" kind="line" />
       </div>
       <div className="h-[280px]">
@@ -85,7 +85,7 @@ export function DepartureChart({ departures }: { departures: Departure[] }) {
             <XAxis dataKey="label" {...AXIS} interval="preserveStartEnd" minTickGap={8} />
             <YAxis {...AXIS} axisLine={false} width={48} />
             <Tooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.6 }}
+              cursor={{ fill: "var(--colorNeutralBackground3)", opacity: 0.6 }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const d = payload[0].payload as Departure;
@@ -94,7 +94,7 @@ export function DepartureChart({ departures }: { departures: Departure[] }) {
                     title={`${fmtDate(d.date)} · ${d.status}${d.cancellationReason ? ` (${d.cancellationReason.toLowerCase()})` : ""}`}
                     rows={[
                       { label: "Booked pax", value: d.bookedPax, swatch: DEP_FILL[depKind(d)] },
-                      { label: "Break-even pax", value: d.breakEvenPax, swatch: "#f6f1e4", dashed: true },
+                      { label: "Break-even pax", value: d.breakEvenPax, swatch: "var(--colorNeutralForeground1)", dashed: true },
                       { label: "Capacity", value: d.capacity, swatch: "var(--chart-axis)", dashed: false },
                       { label: "Load factor", value: fmtPct(d.bookedPax / d.capacity) },
                       { label: d.status === "upcoming" ? "Projected margin" : "Margin", value: fmtMoney(departureMargin(d), { signed: true }) },
@@ -108,7 +108,7 @@ export function DepartureChart({ departures }: { departures: Departure[] }) {
                 <Cell key={d.id} fill={DEP_FILL[depKind(d)]} />
               ))}
             </Bar>
-            <Line dataKey="breakEvenPax" stroke="var(--foreground)" strokeDasharray="5 4" strokeWidth={1.5} dot={false} type="step" isAnimationActive={false} />
+            <Line dataKey="breakEvenPax" stroke="var(--colorNeutralForeground1)" strokeDasharray="5 4" strokeWidth={1.5} dot={false} type="step" isAnimationActive={false} />
             <Line dataKey="capacity" stroke="var(--chart-axis)" strokeWidth={1.5} dot={false} type="step" isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>

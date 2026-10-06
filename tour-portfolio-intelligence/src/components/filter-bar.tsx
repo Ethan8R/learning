@@ -1,113 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { RotateCcw } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button, Caption1, Dropdown, Field, Option } from "@fluentui/react-components";
+import { ArrowResetRegular } from "@fluentui/react-icons";
 import { useFilters } from "@/components/filters-provider";
 import { AS_OF, REGIONS, TOUR_TYPES, YEARS, type Year } from "@/data/seed";
 import { DEFAULT_FILTERS, type Filters } from "@/lib/analytics";
 import { fmtDate } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
-const regionItems = { All: "All regions", ...Object.fromEntries(REGIONS.map((r) => [r, r])) };
-const typeItems = { All: "All tour types", ...Object.fromEntries(TOUR_TYPES.map((t) => [t, t])) };
+const regionItems: Record<string, string> = { All: "All regions", ...Object.fromEntries(REGIONS.map((r) => [r, r])) };
+const typeItems: Record<string, string> = { All: "All tour types", ...Object.fromEntries(TOUR_TYPES.map((t) => [t, t])) };
+const yearItems: Record<string, string> = Object.fromEntries(YEARS.map((y) => [String(y), String(y)]));
 
-function FilterSelect({
+function FilterDropdown({
   label,
   value,
   items,
   onChange,
-  className,
+  width,
 }: {
   label: string;
   value: string;
   items: Record<string, string>;
   onChange: (v: string) => void;
-  className?: string;
+  width: number;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="eyebrow" aria-hidden>
-        {label}
-      </span>
-      <Select value={value} items={items} onValueChange={(v) => v && onChange(String(v))}>
-        <SelectTrigger aria-label={label} className={cn("h-10 bg-card text-sm data-[size=default]:h-10", className)}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent alignItemWithTrigger={false} align="start">
-          {Object.entries(items).map(([v, l]) => (
-            <SelectItem key={v} value={v}>
-              {l}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-/**
- * Season range as a route line: four stops, the selected stretch drawn in brass.
- * Click once to pick a single year, click a second stop to extend the range.
- */
-function YearRoute() {
-  const { filters, setFilters } = useFilters();
-  const [anchor, setAnchor] = useState<Year | null>(null);
-  const idx = (y: Year) => YEARS.indexOf(y);
-  const from = idx(filters.yearFrom);
-  const to = idx(filters.yearTo);
-  const pct = (i: number) => (i / (YEARS.length - 1)) * 100;
-
-  const pick = (y: Year) => {
-    if (anchor === null) {
-      setFilters({ yearFrom: y, yearTo: y });
-      setAnchor(y);
-    } else {
-      setFilters({ yearFrom: Math.min(anchor, y) as Year, yearTo: Math.max(anchor, y) as Year });
-      setAnchor(null);
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="eyebrow" id="season-label">
-        Seasons {anchor !== null && <span className="text-brass normal-case tracking-normal">· pick an end year</span>}
-      </span>
-      <div className="relative h-10 w-[15rem]" role="group" aria-labelledby="season-label">
-        <div className="absolute top-[13px] right-[22px] left-[22px] h-px bg-[var(--chart-baseline)]">
-          <div
-            className="absolute -top-px h-[3px] rounded-full bg-brass transition-all duration-300 ease-[var(--ease-out)]"
-            style={{ left: `${pct(from)}%`, width: `${pct(to) - pct(from)}%` }}
-          />
-        </div>
-        <div className="absolute inset-x-0 top-0 flex justify-between">
-          {YEARS.map((y, i) => {
-            const on = i >= from && i <= to;
-            return (
-              <button
-                key={y}
-                type="button"
-                onClick={() => pick(y)}
-                aria-pressed={on}
-                aria-label={`${y}${on ? ", in range" : ""}`}
-                className="group flex h-10 w-11 flex-col items-center gap-0.5 rounded-md"
-              >
-                <span
-                  className={cn(
-                    "mt-[7px] size-3 rounded-full border-2 transition-colors duration-200",
-                    on ? "border-brass bg-brass" : "border-[var(--chart-baseline)] bg-card group-hover:border-ink",
-                    anchor === y && "ring-4 ring-brass/25",
-                  )}
-                />
-                <span className={cn("font-mono text-[0.6875rem] tabular", on ? "text-ink font-medium" : "text-muted-foreground")}>
-                  {y}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    <Field label={label} size="small">
+      <Dropdown
+        size="medium"
+        value={items[value]}
+        selectedOptions={[value]}
+        onOptionSelect={(_, d) => d.optionValue && onChange(d.optionValue)}
+        style={{ minWidth: width, width }}
+      >
+        {Object.entries(items).map(([v, l]) => (
+          <Option key={v} value={v}>
+            {l}
+          </Option>
+        ))}
+      </Dropdown>
+    </Field>
   );
 }
 
@@ -115,36 +47,44 @@ export function FilterBar() {
   const { filters, setFilters, reset } = useFilters();
   const dirty = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
   return (
-    <div className="sticky top-0 z-30 border-b border-rule bg-paper/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-end gap-x-6 gap-y-3 px-4 py-3 md:px-8">
-        <YearRoute />
-        <FilterSelect
+    <div className="sticky top-0 z-30 border-b border-[var(--colorNeutralStroke2)] bg-[var(--colorNeutralBackground2)]">
+      <div className="mx-auto flex max-w-[1440px] flex-wrap items-end gap-x-4 gap-y-2 px-4 py-3 md:px-8" role="search" aria-label="Global filters">
+        <FilterDropdown
+          label="From"
+          value={String(filters.yearFrom)}
+          items={yearItems}
+          onChange={(v) => setFilters({ yearFrom: Number(v) as Year })}
+          width={104}
+        />
+        <FilterDropdown
+          label="To"
+          value={String(filters.yearTo)}
+          items={yearItems}
+          onChange={(v) => setFilters({ yearTo: Number(v) as Year })}
+          width={104}
+        />
+        <FilterDropdown
           label="Region"
           value={filters.region}
           items={regionItems}
           onChange={(v) => setFilters({ region: v as Filters["region"] })}
-          className="w-[13.5rem]"
+          width={232}
         />
-        <FilterSelect
+        <FilterDropdown
           label="Tour type"
           value={filters.type}
           items={typeItems}
           onChange={(v) => setFilters({ type: v as Filters["type"] })}
-          className="w-[11.5rem]"
+          width={192}
         />
         {dirty && (
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex h-10 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-ink"
-          >
-            <RotateCcw className="size-4" aria-hidden />
+          <Button appearance="subtle" icon={<ArrowResetRegular />} onClick={reset}>
             Reset filters
-          </button>
+          </Button>
         )}
-        <p className="ml-auto max-w-[17rem] pb-1 text-right text-xs leading-snug text-muted-foreground">
-          Data as of <span className="font-mono">{fmtDate(AS_OF)}</span>. 2026 includes upcoming departures at current bookings.
-        </p>
+        <Caption1 className="ml-auto max-w-[19rem] pb-1.5 text-right text-[var(--colorNeutralForeground3)]">
+          Data as of {fmtDate(AS_OF)}. 2026 includes upcoming departures at current bookings.
+        </Caption1>
       </div>
     </div>
   );

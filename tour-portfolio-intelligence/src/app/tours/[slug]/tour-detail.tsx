@@ -1,20 +1,51 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Badge,
+  Body1,
+  Breadcrumb,
+  BreadcrumbButton,
+  BreadcrumbDivider,
+  BreadcrumbItem,
+  Caption1,
+  Card,
+  CardHeader,
+  MessageBar,
+  MessageBarBody,
+  Subtitle1,
+  Subtitle2,
+  Table,
+  TableBody,
+  TableCell,
+  TableCellLayout,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+  Text,
+  Title2,
+} from "@fluentui/react-components";
+import { LightbulbRegular, SparkleFilled } from "@fluentui/react-icons";
 import { useFilters } from "@/components/filters-provider";
 import { StatusBadge, TrendArrow } from "@/components/indicators";
 import { Segmented } from "@/components/segmented";
 import { DepartureChart, TourYearChart } from "@/components/charts/tour-charts";
 import { DEPARTURES, TOUR_BY_SLUG } from "@/data/seed";
+import type { DepartureStatus } from "@/data/types";
 import { departureMargin, summarizeTour, tourInsight, tourMatches, yearsInRange } from "@/lib/analytics";
 import { fmtDate, fmtInt, fmtMoney, fmtPct } from "@/lib/format";
-import { cn } from "@/lib/utils";
+
+const negative = "text-[var(--colorStatusDangerForeground1)]";
+const muted = "text-[var(--colorNeutralForeground3)]";
+const DEP_BADGE: Record<DepartureStatus, "subtle" | "danger" | "brand"> = {
+  operated: "subtle",
+  cancelled: "danger",
+  upcoming: "brand",
+};
 
 export function TourDetail({ slug }: { slug: string }) {
+  const router = useRouter();
   const tour = TOUR_BY_SLUG.get(slug)!;
   const { filters } = useFilters();
   const years = yearsInRange(filters);
@@ -32,197 +63,211 @@ export function TourDetail({ slug }: { slug: string }) {
   const outsideFilters = !tourMatches(tour, filters);
 
   return (
-    <div className="space-y-8">
-      <div className="rise">
-        <Link
-          href="/tours"
-          className="inline-flex min-h-9 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Tour comparison
-        </Link>
-        <p className="eyebrow mt-5">
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-2">
+        <Breadcrumb aria-label="Breadcrumb">
+          <BreadcrumbItem>
+            <BreadcrumbButton onClick={() => router.push("/tours")}>Tour comparison</BreadcrumbButton>
+          </BreadcrumbItem>
+          <BreadcrumbDivider />
+          <BreadcrumbItem>
+            <BreadcrumbButton current>{tour.name}</BreadcrumbButton>
+          </BreadcrumbItem>
+        </Breadcrumb>
+        <div className="flex flex-wrap items-center gap-3">
+          <Title2 as="h1">{tour.name}</Title2>
+          <StatusBadge status={summary.status} size="large" />
+        </div>
+        <Body1 className="text-[var(--colorNeutralForeground2)]">
           {tour.region} · {tour.type} · {tour.durationDays} days · avg. ${fmtInt(tour.pricePerPax)} per guest
           {tour.firstYear > 2023 && ` · launched ${tour.firstYear}`}
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1 className="text-[2.25rem] leading-[1.05] text-ink md:text-[3.25rem]">{tour.name}</h1>
-          <StatusBadge status={summary.status} className="text-xs" />
-        </div>
+        </Body1>
         {outsideFilters && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            This tour sits outside the current region or type filter; showing it anyway.
-          </p>
+          <MessageBar intent="info">
+            <MessageBarBody>This tour sits outside the current region or type filter; showing it anyway.</MessageBarBody>
+          </MessageBar>
         )}
-      </div>
+      </header>
 
       {!summary.years.length ? (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No departures for this tour in the selected years.
-          </CardContent>
+          <Body1 className={`py-10 text-center ${muted}`}>No departures for this tour in the selected years.</Body1>
         </Card>
       ) : (
         <>
-          <section
-            className="rise grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-rule bg-rule shadow-[0_10px_28px_-18px_rgba(16,33,46,0.25)] lg:grid-cols-4"
-            aria-label="Tour metrics"
-            style={{ ["--i" as string]: 1 }}
-          >
-            <Stat label="Average load factor" value={fmtPct(summary.total.lf, 1)} sub={<>break-even {fmtPct(summary.total.beLf)} · <TrendArrow trend={summary.trend} slope={summary.slope} /></>} />
+          <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Tour metrics">
+            <Stat
+              label="Average load factor"
+              value={fmtPct(summary.total.lf, 1)}
+              sub={
+                <>
+                  <Caption1 className={muted}>break-even {fmtPct(summary.total.beLf)}</Caption1>
+                  <TrendArrow trend={summary.trend} slope={summary.slope} />
+                </>
+              }
+            />
             <Stat
               label="Departures run / cancelled"
               value={`${summary.total.operated} / ${summary.total.cancelled}`}
-              sub={summary.total.upcoming ? `+${summary.total.upcoming} upcoming` : `${summary.total.departures} scheduled`}
-              tone={summary.total.cancelled ? "bad" : undefined}
+              sub={
+                <Caption1 className={muted}>
+                  {summary.total.upcoming ? `+${summary.total.upcoming} upcoming` : `${summary.total.departures} scheduled`}
+                </Caption1>
+              }
+              bad={summary.total.cancelled > 0}
             />
             <Stat
               label="Cumulative margin"
               value={fmtMoney(summary.total.margin, { signed: true })}
-              sub={`on ${fmtMoney(summary.total.revenue)} revenue`}
-              tone={summary.total.margin < 0 ? "bad" : undefined}
+              sub={<Caption1 className={muted}>on {fmtMoney(summary.total.revenue)} revenue</Caption1>}
+              bad={summary.total.margin < 0}
             />
             <Stat
               label="Cancellation & rebooking cost"
               value={fmtMoney(summary.total.cancellationCost)}
-              sub={summary.total.lowWaterCancelled ? `${summary.total.lowWaterCancelled} low water cancellations` : "attrition fees + rebooking"}
-              tone={summary.total.cancellationCost ? "bad" : undefined}
+              sub={
+                <Caption1 className={muted}>
+                  {summary.total.lowWaterCancelled
+                    ? `${summary.total.lowWaterCancelled} low water cancellations`
+                    : "attrition fees + rebooking"}
+                </Caption1>
+              }
+              bad={summary.total.cancellationCost > 0}
             />
           </section>
 
-          <section className="rise grid grid-cols-1 gap-5 lg:grid-cols-5" style={{ ["--i" as string]: 2 }}>
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
             {insight && (
-              <article className="relative overflow-hidden rounded-lg bg-ink p-6 text-[#f6f1e4] shadow-[0_18px_40px_-24px_rgba(16,33,46,0.6)] lg:col-span-2">
-                <svg className="pointer-events-none absolute -top-10 -right-10 size-48 text-[#e3b261]/15" viewBox="0 0 100 100" aria-hidden>
-                  <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" />
-                  <circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" />
-                  <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" />
-                </svg>
-                <div className="flex items-center gap-2 font-mono text-[0.6875rem] tracking-[0.12em] text-[#e3b261] uppercase">
-                  <Sparkles className="size-4" aria-hidden />
-                  AI insight
-                  <span className="rounded-full border border-[#e3b261]/50 px-1.5 py-px text-[0.625rem] tracking-[0.08em]">Demo</span>
-                </div>
-                <p className="font-display mt-4 text-[1.625rem] leading-[1.15]">{insight.headline}</p>
+              <Card className="lg:col-span-2" style={{ background: "var(--colorBrandBackground2)" }}>
+                <CardHeader
+                  image={<SparkleFilled fontSize={24} className="text-[var(--colorBrandForeground1)]" aria-hidden />}
+                  header={
+                    <span className="flex items-center gap-2">
+                      <Subtitle1 as="h2">AI insight</Subtitle1>
+                      <Badge appearance="outline" color="brand" size="small">
+                        Demo
+                      </Badge>
+                    </span>
+                  }
+                  description={<Caption1 className={muted}>Generated from the sample data with fixed rules</Caption1>}
+                />
+                <Subtitle2 as="p" className="m-0">
+                  {insight.headline}
+                </Subtitle2>
                 {insight.points.length > 0 && (
-                  <ul className="mt-4 space-y-2 text-sm leading-relaxed text-[#f6f1e4]/80">
+                  <ul className="m-0 flex list-disc flex-col gap-1.5 pl-5">
                     {insight.points.map((p) => (
-                      <li key={p} className="flex gap-2.5">
-                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#e3b261]" aria-hidden />
-                        {p}
+                      <li key={p}>
+                        <Body1>{p}</Body1>
                       </li>
                     ))}
                   </ul>
                 )}
-                <div className="mt-5 border-t border-white/15 pt-4">
-                  <div className="font-mono text-[0.6875rem] tracking-[0.12em] text-[#e3b261] uppercase">Recommendation</div>
-                  <p className="mt-1.5 text-[0.9375rem] leading-relaxed font-medium">{insight.recommendation}</p>
+                <div
+                  className="flex gap-3 rounded-[var(--borderRadiusMedium)] bg-[var(--colorNeutralBackground1)] p-3"
+                  style={{ boxShadow: "var(--shadow2)" }}
+                >
+                  <LightbulbRegular fontSize={20} className="mt-0.5 shrink-0 text-[var(--colorBrandForeground1)]" aria-hidden />
+                  <div className="flex flex-col gap-0.5">
+                    <Text weight="semibold">Recommendation</Text>
+                    <Body1>{insight.recommendation}</Body1>
+                  </div>
                 </div>
-                <p className="mt-4 text-[0.6875rem] text-[#f6f1e4]/50">Generated from the sample data with fixed rules.</p>
-              </article>
+              </Card>
             )}
             <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Load factor by year</CardTitle>
-                <CardDescription>{summary.statusReason}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TourYearChart
-                  rows={summary.years.map((y) => ({
-                    year: String(y),
-                    lf: summary.byYear[y]!.lf,
-                    beLf: summary.byYear[y]!.beLf,
-                    departures: summary.byYear[y]!.departures,
-                  }))}
-                />
-              </CardContent>
+              <CardHeader
+                header={<Subtitle1 as="h2">Load factor by year</Subtitle1>}
+                description={<Caption1 className={muted}>{summary.statusReason}</Caption1>}
+              />
+              <TourYearChart
+                rows={summary.years.map((y) => ({
+                  year: String(y),
+                  lf: summary.byYear[y]!.lf,
+                  beLf: summary.byYear[y]!.beLf,
+                  departures: summary.byYear[y]!.departures,
+                }))}
+              />
             </Card>
           </section>
 
-          <Card className="rise" style={{ ["--i" as string]: 3 }}>
-            <CardHeader>
-              <CardTitle>Departures in {activeYear}</CardTitle>
-              <CardDescription>Booked pax against break-even and capacity for each departure</CardDescription>
-              {summary.years.length > 1 && (
-                <CardAction>
-                  <Segmented
-                    label="Year"
-                    value={activeYear}
-                    onChange={setPickedYear}
-                    options={summary.years.map((y) => ({ value: String(y), label: String(y) }))}
-                  />
-                </CardAction>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <DepartureChart departures={yearDeps} />
-              <div className="-mx-(--card-spacing)">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="pl-(--card-spacing)">Departure</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Booked / BE / cap.</TableHead>
-                      <TableHead className="text-right">Load factor</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-right">Rebooking cost</TableHead>
-                      <TableHead className="pr-(--card-spacing) text-right">Margin</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {yearDeps.map((d) => {
-                      const m = departureMargin(d);
-                      return (
-                        <TableRow key={d.id}>
-                          <TableCell className="pl-(--card-spacing) tabular">
-                            {fmtDate(d.date)}
-                            <div className="text-[11px] text-muted-foreground">{d.season}</div>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={cn(
-                                "rounded-full border px-2 py-0.5 font-mono text-[0.6875rem] font-medium uppercase",
-                                d.status === "operated" && "border-rule bg-muted text-ink",
-                                d.status === "cancelled" && "border-[#d99a8c] bg-[var(--cell-below)] text-[#8a2414]",
-                                d.status === "upcoming" && "border-[#9cc3dc] bg-[#dcebf4] text-[#0b4a6e]",
-                              )}
-                            >
-                              {d.status}
-                            </span>
-                            {d.cancellationReason && (
-                              <div className="mt-1 text-[11px] text-muted-foreground">{d.cancellationReason}</div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right tabular">
-                            <span className={d.bookedPax < d.breakEvenPax ? "font-medium text-[var(--text-critical)]" : "font-medium"}>
-                              {d.bookedPax}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {" "}
-                              / {d.breakEvenPax} / {d.capacity}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right tabular">{fmtPct(d.bookedPax / d.capacity)}</TableCell>
-                          <TableCell className="text-right tabular">{d.revenue ? fmtMoney(d.revenue) : "n/a"}</TableCell>
-                          <TableCell className="text-right tabular">
-                            {d.rebookingCost ? fmtMoney(d.rebookingCost) : <span className="text-muted-foreground">n/a</span>}
-                          </TableCell>
-                          <TableCell
-                            className={cn(
-                              "pr-(--card-spacing) text-right font-medium tabular",
-                              m < 0 && "text-[var(--text-critical)]",
-                            )}
+          <Card>
+            <CardHeader
+              header={<Subtitle1 as="h2">Departures in {activeYear}</Subtitle1>}
+              description={<Caption1 className={muted}>Booked pax against break-even and capacity for each departure</Caption1>}
+            />
+            {summary.years.length > 1 && (
+              <Segmented
+                label="Year"
+                value={activeYear}
+                onChange={setPickedYear}
+                options={summary.years.map((y) => ({ value: String(y), label: String(y) }))}
+              />
+            )}
+            <DepartureChart departures={yearDeps} />
+            <div className="overflow-x-auto">
+              <Table aria-label={`Departures in ${activeYear}`} className="min-w-[760px]">
+                <TableHeader className="bg-[var(--colorNeutralBackground2)]">
+                  <TableRow>
+                    <TableHeaderCell>Departure</TableHeaderCell>
+                    <TableHeaderCell>Status</TableHeaderCell>
+                    <TableHeaderCell>Booked / BE / cap.</TableHeaderCell>
+                    <TableHeaderCell>Load factor</TableHeaderCell>
+                    <TableHeaderCell>Revenue</TableHeaderCell>
+                    <TableHeaderCell>Rebooking cost</TableHeaderCell>
+                    <TableHeaderCell>Margin</TableHeaderCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {yearDeps.map((d) => {
+                    const m = departureMargin(d);
+                    return (
+                      <TableRow key={d.id}>
+                        <TableCell>
+                          <TableCellLayout description={<Caption1 className={muted}>{d.season}</Caption1>}>
+                            <span className="tabular">{fmtDate(d.date)}</span>
+                          </TableCellLayout>
+                        </TableCell>
+                        <TableCell>
+                          <TableCellLayout
+                            description={
+                              d.cancellationReason ? <Caption1 className={muted}>{d.cancellationReason}</Caption1> : undefined
+                            }
                           >
-                            {fmtMoney(m, { signed: true })}
-                            {d.status === "upcoming" && <div className="text-[11px] font-normal text-muted-foreground">projected</div>}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
+                            <Badge appearance="tint" color={DEP_BADGE[d.status]} className="capitalize">
+                              {d.status}
+                            </Badge>
+                          </TableCellLayout>
+                        </TableCell>
+                        <TableCell className="tabular">
+                          <Text weight="semibold" className={d.bookedPax < d.breakEvenPax ? negative : ""}>
+                            {d.bookedPax}
+                          </Text>
+                          <span className={muted}>
+                            {" "}
+                            / {d.breakEvenPax} / {d.capacity}
+                          </span>
+                        </TableCell>
+                        <TableCell className="tabular">{fmtPct(d.bookedPax / d.capacity)}</TableCell>
+                        <TableCell className="tabular">{d.revenue ? fmtMoney(d.revenue) : <span className={muted}>n/a</span>}</TableCell>
+                        <TableCell className="tabular">
+                          {d.rebookingCost ? fmtMoney(d.rebookingCost) : <span className={muted}>n/a</span>}
+                        </TableCell>
+                        <TableCell>
+                          <TableCellLayout
+                            description={d.status === "upcoming" ? <Caption1 className={muted}>projected</Caption1> : undefined}
+                          >
+                            <Text weight="semibold" className={`tabular ${m < 0 ? negative : ""}`}>
+                              {fmtMoney(m, { signed: true })}
+                            </Text>
+                          </TableCellLayout>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
         </>
       )}
@@ -230,14 +275,16 @@ export function TourDetail({ slug }: { slug: string }) {
   );
 }
 
-function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: React.ReactNode; tone?: "bad" }) {
+function Stat({ label, value, sub, bad }: { label: string; value: string; sub?: React.ReactNode; bad?: boolean }) {
   return (
-    <div className="flex flex-col gap-2 bg-card p-5">
-      <div className="eyebrow">{label}</div>
-      <div className={cn("font-display text-[2.5rem] leading-none tabular", tone === "bad" ? "text-[var(--text-critical)]" : "text-ink")}>
+    <Card appearance="filled" className="gap-1.5">
+      <Text size={300} weight="semibold" className="text-[var(--colorNeutralForeground2)]">
+        {label}
+      </Text>
+      <Text size={800} weight="semibold" className={`tabular ${bad ? negative : ""}`}>
         {value}
-      </div>
-      {sub && <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">{sub}</div>}
-    </div>
+      </Text>
+      {sub && <div className="flex flex-wrap items-center gap-2">{sub}</div>}
+    </Card>
   );
 }

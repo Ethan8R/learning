@@ -1,7 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { Tab, TabList } from "@fluentui/react-components";
 
+/** View switcher for charts, built on Fluent's small subtle-circular TabList. */
 export function Segmented<T extends string>({
   value,
   options,
@@ -14,22 +15,18 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-full border border-rule bg-paper p-0.5">
+    <TabList
+      size="small"
+      appearance="subtle-circular"
+      selectedValue={value}
+      onTabSelect={(_, d) => onChange(d.value as T)}
+      aria-label={label}
+    >
       {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          role="radio"
-          aria-checked={value === o.value}
-          onClick={() => onChange(o.value)}
-          className={cn(
-            "min-h-8 rounded-full px-3 text-xs font-medium transition-colors duration-200",
-            value === o.value ? "bg-ink text-primary-foreground" : "text-muted-foreground hover:text-ink",
-          )}
-        >
+        <Tab key={o.value} value={o.value}>
           {o.label}
-        </button>
+        </Tab>
       ))}
-    </div>
+    </TabList>
   );
 }

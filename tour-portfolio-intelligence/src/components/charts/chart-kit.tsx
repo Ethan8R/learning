@@ -2,10 +2,10 @@
 
 import type { ReactNode } from "react";
 
-/** Shared chart chrome so every chart reads as one system. */
+/** Shared chart chrome so every chart reads as one Fluent system. */
 export const AXIS = {
   stroke: "var(--chart-baseline)",
-  tick: { fill: "var(--chart-axis)", fontSize: 11, fontFamily: "var(--font-ledger)" },
+  tick: { fill: "var(--chart-axis)", fontSize: 12, fontFamily: "var(--fontFamilyBase)" },
   tickLine: false,
 } as const;
 
@@ -13,27 +13,37 @@ export const GRID = { stroke: "var(--chart-grid)", strokeDasharray: "0", vertica
 
 export const pctTick = (v: number) => `${Math.round(v * 100)}%`;
 
-export function TooltipCard({ title, rows }: { title: ReactNode; rows: { label: ReactNode; value: ReactNode; swatch?: string; dashed?: boolean }[] }) {
+/** Matches the Fluent Tooltip/Popover surface: white, shadow16, medium radius. */
+export function TooltipCard({
+  title,
+  rows,
+}: {
+  title: ReactNode;
+  rows: { label: ReactNode; value: ReactNode; swatch?: string; dashed?: boolean }[];
+}) {
   return (
-    <div className="min-w-48 rounded-md border border-ink/10 bg-ink px-3 py-2.5 text-xs text-[#f6f1e4] shadow-xl">
-      <div className="mb-2 font-mono text-[0.6875rem] tracking-[0.06em] text-[#e3b261] uppercase">{title}</div>
+    <div
+      className="min-w-48 rounded-[var(--borderRadiusMedium)] bg-[var(--colorNeutralBackground1)] px-3 py-2 text-[12px] leading-4 text-[var(--colorNeutralForeground1)]"
+      style={{ boxShadow: "var(--shadow16)", fontFamily: "var(--fontFamilyBase)" }}
+    >
+      <div className="mb-1.5 font-semibold">{title}</div>
       <div className="space-y-1">
         {rows.map((r, i) => (
           <div key={i} className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-1.5 text-[#f6f1e4]/70">
+            <span className="flex items-center gap-1.5 text-[var(--colorNeutralForeground2)]">
               {r.swatch && (
                 <span
-                  className="inline-block h-0.5 w-3"
+                  className="inline-block"
                   style={
                     r.dashed
-                      ? { borderTop: `2px dashed ${r.swatch}` }
+                      ? { borderTop: `2px dashed ${r.swatch}`, width: 12 }
                       : { background: r.swatch, height: 8, width: 8, borderRadius: 2 }
                   }
                 />
               )}
               {r.label}
             </span>
-            <span className="font-mono font-medium text-[#f6f1e4] tabular">{r.value}</span>
+            <span className="font-semibold tabular">{r.value}</span>
           </div>
         ))}
       </div>
@@ -43,14 +53,11 @@ export function TooltipCard({ title, rows }: { title: ReactNode; rows: { label: 
 
 export function LegendItem({ color, label, kind = "box" }: { color: string; label: string; kind?: "box" | "line" | "dash" }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 text-[12px] leading-4 text-[var(--colorNeutralForeground2)]">
       {kind === "box" ? (
-        <span className="inline-block size-2.5 rounded-[3px]" style={{ background: color }} />
+        <span className="inline-block size-2.5 rounded-[2px]" style={{ background: color }} />
       ) : (
-        <span
-          className="inline-block w-4"
-          style={{ borderTop: `2px ${kind === "dash" ? "dashed" : "solid"} ${color}` }}
-        />
+        <span className="inline-block w-4" style={{ borderTop: `2px ${kind === "dash" ? "dashed" : "solid"} ${color}` }} />
       )}
       {label}
     </span>

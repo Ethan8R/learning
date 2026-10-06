@@ -17,7 +17,7 @@ export function Sparkline({ values, color = "var(--series-1)" }: { values: numbe
             dot={(p) => {
               const last = p.index === data.length - 1;
               return last ? (
-                <circle key={p.index} cx={p.cx} cy={p.cy} r={3} fill={color} stroke="var(--card)" strokeWidth={1.5} />
+                <circle key={p.index} cx={p.cx} cy={p.cy} r={3} fill={color} stroke="var(--colorNeutralBackground1)" strokeWidth={1.5} />
               ) : (
                 <g key={p.index} />
               );

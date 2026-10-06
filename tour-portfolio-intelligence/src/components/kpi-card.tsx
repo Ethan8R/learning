@@ -1,8 +1,9 @@
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
-import { Sparkline } from "@/components/charts/sparkline";
-import { cn } from "@/lib/utils";
+"use client";
 
-/** One column of the KPI ledger. Rendered inside a shared panel with vertical rules. */
+import { Badge, Caption1, Card, LargeTitle, Text } from "@fluentui/react-components";
+import { ArrowDownRegular, ArrowUpRegular, SubtractRegular } from "@fluentui/react-icons";
+import { Sparkline } from "@/components/charts/sparkline";
+
 export function KpiCard({
   label,
   value,
@@ -11,6 +12,7 @@ export function KpiCard({
   goodWhen,
   caption,
   spark,
+  icon,
 }: {
   label: string;
   value: string;
@@ -20,34 +22,39 @@ export function KpiCard({
   goodWhen: "up" | "down";
   caption: string;
   spark?: number[];
+  icon?: React.ReactElement;
 }) {
   const good = deltaDirection && deltaDirection !== "flat" && deltaDirection === goodWhen;
   const bad = deltaDirection && deltaDirection !== "flat" && deltaDirection !== goodWhen;
-  const Icon = deltaDirection === "up" ? ArrowUpRight : deltaDirection === "down" ? ArrowDownRight : Minus;
+  const Icon = deltaDirection === "up" ? ArrowUpRegular : deltaDirection === "down" ? ArrowDownRegular : SubtractRegular;
   return (
-    <div className="flex flex-col gap-3 bg-card p-5">
-      <div className="eyebrow">{label}</div>
+    <Card className="gap-2" appearance="filled">
+      <div className="flex items-center gap-2 text-[var(--colorNeutralForeground3)]">
+        {icon && <span className="grid size-6 place-items-center rounded-[var(--borderRadiusMedium)] bg-[var(--colorBrandBackground2)] text-[var(--colorBrandForeground1)]">{icon}</span>}
+        <Text size={300} weight="semibold" className="text-[var(--colorNeutralForeground2)]">
+          {label}
+        </Text>
+      </div>
       <div className="flex items-end justify-between gap-3">
-        <div className="font-display text-[2.75rem] leading-none text-ink">{value}</div>
-        {spark && spark.length > 1 && <Sparkline values={spark} color={bad ? "var(--status-critical)" : "var(--river)"} />}
-      </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        {delta && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-mono font-medium tabular",
-              good && "bg-[var(--cell-above)] text-[var(--text-good)]",
-              bad && "bg-[var(--cell-below)] text-[var(--text-critical)]",
-              !good && !bad && "bg-muted text-muted-foreground",
-            )}
-          >
-            <Icon className="size-3.5" aria-hidden />
-            {delta}
-            <span className="sr-only">{good ? "(improvement)" : bad ? "(deterioration)" : ""}</span>
-          </span>
+        <LargeTitle className="tabular">{value}</LargeTitle>
+        {spark && spark.length > 1 && (
+          <Sparkline values={spark} color={bad ? "var(--status-critical)" : "var(--series-1)"} />
         )}
-        <span className="text-muted-foreground">{caption}</span>
       </div>
-    </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {delta && (
+          <Badge
+            appearance="tint"
+            color={good ? "success" : bad ? "danger" : "subtle"}
+            icon={<Icon />}
+            className="tabular"
+          >
+            {delta}
+            <span className="sr-only">{good ? " (improvement)" : bad ? " (deterioration)" : ""}</span>
+          </Badge>
+        )}
+        <Caption1 className="text-[var(--colorNeutralForeground3)]">{caption}</Caption1>
+      </div>
+    </Card>
   );
 }
